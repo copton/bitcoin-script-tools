@@ -1,0 +1,29 @@
+name:           bitcoin-script-engine
+version:        0.1
+cabal-version:  >= 1.2
+build-type:     Simple
+homepage:       https://en.bitcoin.it/wiki/Script
+category:       Language
+author:         Alexander Bernauer <alex@copton.net>
+maintainer:     Alexander Bernauer <alex@copton.net>
+license:        LGPL-3
+license-file:   LICENSE
+data-files:     src
+description:    An inofficial implementation of the Bitcoin Script engine
+
+library
+  build-depends:   base >= 4
+  ghc-options:     -Wall
+  hs-source-dirs:  src
+  build-depends:
+    bytestring >= 0.9.1.10
+  exposed-modules:
+    Language.Bitcoin.Opcodes
+    Language.Bitcoin.Machine
+
+executable bitcoin-script-engine
+  hs-source-dirs:  src
+  main-is:         Main.hs
+  build-depends:   base >= 4
+  ghc-options:     -Wall
+
