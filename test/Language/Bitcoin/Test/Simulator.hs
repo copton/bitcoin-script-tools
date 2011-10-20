@@ -1,4 +1,4 @@
-module Language.Bitcoin.Test.Opcodes
+module Language.Bitcoin.Test.Simulator
 (
 	tests
 ) where
@@ -7,7 +7,7 @@ import Language.Bitcoin.Simulator (run_simulator')
 import Language.Bitcoin.Types
 import Test.HUnit
 
-tests = TestLabel "Opcodes" $ TestList testSimpleOps
+tests = TestLabel "Simulator" $ TestList testSimpleOps
 
 simpleOps = [
 	  ([], [], [])

@@ -1,5 +1,4 @@
 module Language.Bitcoin.Types where
-
 -- import {{{1
 import Data.Word (Word8)
 import qualified Data.ByteString.Char8 as B
@@ -149,7 +148,7 @@ data Opcode =
   | OP_NOP8
   | OP_NOP9
   | OP_NOP10
-  deriving (Show)
+  deriving (Show, Eq, Read)
 
 -- data Data = {{{1
 data Data =
@@ -157,5 +156,5 @@ data Data =
   | OP_PUSHDATA1 Word8
   | OP_PUSHDATA2 Word8 Word8
   | OP_PUSHDATA4 Word8 Word8 Word8 Word8
-	deriving (Show)
+	deriving (Show, Eq, Read)
 

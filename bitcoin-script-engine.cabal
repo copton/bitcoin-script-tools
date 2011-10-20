@@ -39,4 +39,5 @@ executable Test
   build-depends:
     HUnit >= 1.2.2.1
   other-modules:
-    Language.Bitcoin.Test.Opcodes
+    Language.Bitcoin.Test.Simulator
+    Language.Bitcoin.Test.Parser
