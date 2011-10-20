@@ -1,6 +1,3 @@
-module Main where
+module Main (main) where
 
-import Language.Bitcoin.Opcodes
-
-main::IO()
-main = putStrLn $ show $ fromEnum OP_PUSHDATA1
+import Language.Bitcoin.Main (main)

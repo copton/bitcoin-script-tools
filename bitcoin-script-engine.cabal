@@ -16,15 +16,20 @@ library
   ghc-options:     -Wall
   hs-source-dirs:  src
   build-depends:
-    bytestring >= 0.9.1.10
+    bytestring >= 0.9.1.10,
+    parsec >= 3.1.1
   exposed-modules:
-    Language.Bitcoin.Machine
-    Language.Bitcoin.Opcodes
+    Language.Bitcoin.Types
     Language.Bitcoin.Simulator
+    Language.Bitcoin.Assembler
+    Language.Bitcoin.Parser
 
-executable bitcoin-script-engine
+executable bitcoin-script
   hs-source-dirs:  src
   main-is:         Main.hs
+  other-modules:
+    Language.Bitcoin.Main
+    Language.Bitcoin.Options
   build-depends:   base >= 4
   ghc-options:     -Wall
 

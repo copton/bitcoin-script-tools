@@ -1,23 +1,28 @@
 module Language.Bitcoin.Simulator 
 (
-	run_simulator
+	run_simulator, run_simulator'
 ) where
 
-import Language.Bitcoin.Machine
-import Language.Bitcoin.Opcodes
+import Language.Bitcoin.Types
+import Data.ByteString (unpack)
 
-run_simulator :: Machine -> Result
-run_simulator machine@(Machine [] stack _) =
+
+run_simulator :: Script -> Result
+run_simulator script = run_simulator' (Machine script [] [])
+
+run_simulator' :: Machine -> Result
+run_simulator' machine@(Machine [] stack _) =
 	case stack of
-		([1]:_) -> Result machine Success
-		_ -> Result machine $ Failure "top stack value is not True"
+		([1]:_) -> Result Success machine
+		_ -> Result (Failure "top stack value is not True") machine
 
-run_simulator machine@(Machine ((CmdData _):_) _ _) = Result machine $ Error "unexpected data"
+run_simulator' (Machine ((PASTE _ data_):rest) stack altStack) =
+	run_simulator' (Machine rest (unpack data_ : stack) altStack)
 
-run_simulator machine@(Machine ((CmdOpcode op):ops) stack altStack) =
+run_simulator' machine@(Machine (op:rest) stack altStack) =
 	case simpleOp op stack of
-		Left what -> Result machine $ Error what
-		Right (stack') -> run_simulator $ Machine ops stack' altStack
+		Left what -> Result (Error what) machine
+		Right (stack') -> run_simulator' (Machine rest stack' altStack)
 
 
 simpleOp :: Opcode -> Stack -> Either String Stack
