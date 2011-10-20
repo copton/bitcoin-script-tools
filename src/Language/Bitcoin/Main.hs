@@ -19,24 +19,24 @@ main = do
 	output <- exitOnError $ runAction opts input
 	if (optOutput opts /= optOutput defaultOptions)
 		then B.writeFile (optOutput opts) output
-		else return ()
+		else putStrLn $ B.unpack output
 
 runAction :: Options -> B.ByteString -> Either String B.ByteString
 runAction opts input
-	| optAssembler opts = assembler input
-	| optDisassembler opts = disassembler input
-	| optSimulator opts = simulator input
+	| optAssembler opts = Right $ assembler input
+	| optDisassembler opts = Right $ disassembler input
+	| optSimulator opts = simulator opts input
 	| otherwise = error "internal error"
 
-assembler :: B.ByteString -> Either String B.ByteString
-assembler code = Right $ run_assembler code
+assembler :: B.ByteString -> B.ByteString
+assembler = run_assembler
 
-disassembler :: B.ByteString -> Either String B.ByteString
-disassembler binary = Right $ run_disassembler binary
+disassembler :: B.ByteString -> B.ByteString
+disassembler = run_disassembler
 
-simulator :: B.ByteString -> Either String B.ByteString
-simulator code =
-	case run_parser code of
+simulator :: Options -> B.ByteString -> Either String B.ByteString
+simulator opts code =
+	case run_parser (optInput opts) code of
 		Left parseError -> Left $ show parseError
 		Right script ->
 			case run_simulator script of
