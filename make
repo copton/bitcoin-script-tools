@@ -23,7 +23,7 @@ def getFirstLine(text, predicate):
     return filter(predicate, text.split("\n"))[0]
 
 def isBuildError(line):
-    return line.startswith("src/Ocram") or line.startswith("test/Ocram")
+    return line.startswith("src/") or line.startswith("test/")
 
 def isTestError(line):
     return line.startswith('### Failure in:') or line.startswith('### Error in:')
