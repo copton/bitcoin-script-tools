@@ -18,8 +18,9 @@ library
   build-depends:
     bytestring >= 0.9.1.10
   exposed-modules:
-    Language.Bitcoin.Opcodes
     Language.Bitcoin.Machine
+    Language.Bitcoin.Opcodes
+    Language.Bitcoin.Simulator
 
 executable bitcoin-script-engine
   hs-source-dirs:  src
@@ -27,3 +28,10 @@ executable bitcoin-script-engine
   build-depends:   base >= 4
   ghc-options:     -Wall
 
+executable Test
+  hs-source-dirs: src, test
+  main-is: Test.hs
+  build-depends:
+    HUnit >= 1.2.2.1
+  other-modules:
+    Language.Bitcoin.Test.Opcodes
