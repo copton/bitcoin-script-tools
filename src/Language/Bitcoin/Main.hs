@@ -2,11 +2,13 @@ module Language.Bitcoin.Main where
 
 import Language.Bitcoin.Options
 import Language.Bitcoin.Simulator (run_simulator)
+import Language.Bitcoin.Preprocessor (run_preprocessor)
 --import Language.Bitcoin.Assembler (run_assembler, run_disassembler)
 import Language.Bitcoin.Parser (run_parser)
 import System.Environment (getArgs, getProgName)
 import System.Exit (exitWith, ExitCode(ExitFailure))
 import System.IO (stderr, hPutStrLn, hGetContents, hPutStr, hFlush, Handle, stdin, stdout, openFile, IOMode(ReadMode, WriteMode))
+
 
 main :: IO ()
 main = do
@@ -32,10 +34,11 @@ simulator :: Options -> IO ()
 simulator opts = do
   (hIn, name) <- fileIn $ optInput opts
   code <- hGetContents hIn
-  result <- exitOnError $ do
-    script <- run_parser name code
-    result <- run_simulator script
-    return $ show result
+  result <- exitOnError $
+        run_parser name code 
+    >>= run_preprocessor
+    >>= run_simulator
+    >>= return . show
   hOut <- fileOut $ optOutput opts
   hPutStr hOut result
   hFlush hOut

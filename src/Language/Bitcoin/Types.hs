@@ -1,36 +1,44 @@
 module Language.Bitcoin.Types where
 -- import {{{1
-import Data.Word (Word8)
+import Data.Word (Word8, Word16, Word32)
 import qualified Data.ByteString.Lazy as B
- 
+
 -- types {{{1
 type Binary = B.ByteString
+type Script = [Command]
+type Program = [Opcode]
 type Code = String
 
-type Stack = [Integer]
-type Script = [Opcode]
+data Item =
+    Raw Integer
+  | Key Int
+  | Sig Int
+  deriving (Show, Eq)
 
-data Machine = Machine Script Stack Stack deriving Show
+type Stack = [Item]
+
+data Machine = Machine Program Stack Stack deriving Show
 
 data ResultCode =
-	  Success
+    Success
   | Failure String
   | Error String
 
 instance Show ResultCode where
-	show Success = "Bitcoin script completed successfully."
-	show (Failure what) = "Bitcoin script failed: " ++ what
-	show (Error what) = "Bitcoin script is illegal: " ++ what
+  show Success = "Bitcoin script completed successfully."
+  show (Failure what) = "Bitcoin script failed: " ++ what
+  show (Error what) = "Bitcoin script is illegal: " ++ what
 
 data Result = Result ResultCode Machine deriving Show
 
 -- data Opcode = {{{1
 data Opcode =
 -- constants {{{2
-    PASTE (Maybe DataOpcode) Integer
-  | OP_0 | OP_FALSE
+    OP_FALSE
+  | OP_TRUE
   | OP_1NEGATE
-  | OP_1 | OP_TRUE
+  | OP_0
+  | OP_1
   | OP_2
   | OP_3
   | OP_4
@@ -147,13 +155,17 @@ data Opcode =
   | OP_NOP8
   | OP_NOP9
   | OP_NOP10
+-- data
+  | PUSH Integer
+  | OP_PUSHDATA1 Word8 Integer 
+  | OP_PUSHDATA2 Word16 Integer
+  | OP_PUSHDATA4 Word32 Integer
   deriving (Show, Eq, Read)
 
--- data DataOpcode = {{{1
-data DataOpcode =
-	  DATA Word8
-  | OP_PUSHDATA1 Word8
-  | OP_PUSHDATA2 Word8 Word8
-  | OP_PUSHDATA4 Word8 Word8 Word8 Word8
-	deriving (Show, Eq, Read)
-
+-- data Command = {{{1
+data Command =
+    CmdOpcode Opcode
+  | DATA Integer
+  | KEY Int
+  | SIG Int
+  deriving (Show, Eq)

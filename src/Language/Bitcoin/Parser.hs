@@ -9,6 +9,7 @@ module Language.Bitcoin.Parser
 import Language.Bitcoin.Types
 import Numeric (readHex)
 import Text.ParserCombinators.Parsec
+import Control.Monad (liftM)
 
 -- run_parser :: String -> Code -> Either String Script {{{1
 run_parser :: String -> Code -> Either String Script
@@ -18,23 +19,42 @@ run_parser source code =
     Right x -> Right x
 
 script :: Parser Script
-script = spaces >> endBy operation separator
+script = do
+  spaces
+  ops <- endBy operation separator
+  eof
+  return ops
 
-operation :: Parser Opcode
-operation = opcode <|> paste
+operation :: Parser Command
+operation = do
+  command <- many (alphaNum <|> char '_' <?> "opcode") 
+  case command of
+    "DATA" -> spaces >> liftM DATA hex
+    "KEY" -> spaces >> hex >>= (\num -> return $ KEY (fromIntegral num))
+    "SIG" -> spaces >> hex >>= (\num -> return $ SIG (fromIntegral num))
+    "PUSH" -> push
+    "OP_PUSHDATA1" -> push1
+    "OP_PUSHDATA2" -> push2
+    "OP_PUSHDATA4" -> push4
+    x -> opcode x
 
-opcode :: Parser Opcode
-opcode = do
-  prefix <- string "OP_"
-  suffix <- many alphaNum
-  liftReadS reads $ prefix ++ suffix
+opcode :: String -> Parser Command
+opcode x = liftM CmdOpcode $ liftReadS reads x
 
-paste :: Parser Opcode
-paste = do
-  _ <- string "PASTE" >> space >> string "0x"
-  value <- many alphaNum
-  data_ <- (liftReadS readHex value) :: Parser Integer
-  return $ PASTE Nothing $ data_
+push :: Parser Command
+push = undefined
+
+push1 :: Parser Command
+push1 = undefined
+
+push2 :: Parser Command
+push2 = undefined
+
+push4 :: Parser Command
+push4 = undefined
+
+hex :: Parser Integer
+hex = many alphaNum >>= liftReadS readHex
 
 separator :: Parser Char
 separator = newline <|> char ';'

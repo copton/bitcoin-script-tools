@@ -12,16 +12,16 @@ import qualified Data.ByteString.Lazy as B
 tests = TestLabel "Parser" $ TestList $ good ++ bad
 
 goodCases = [
-    ("OP_FALSE\n", [OP_FALSE])
-  , ("OP_FALSE;", [OP_FALSE])
-  , (" OP_FALSE;", [OP_FALSE])
-  , ("OP_FALSE;OP_TRUE;", [OP_FALSE, OP_TRUE])
-  , ("OP_FALSE\nOP_TRUE;", [OP_FALSE, OP_TRUE])
-  , ("PASTE 0x23;", [PASTE Nothing 0x23])
+    ("OP_FALSE\n", [CmdOpcode OP_FALSE])
+  , ("OP_FALSE;", [CmdOpcode OP_FALSE])
+  , (" OP_FALSE;", [CmdOpcode OP_FALSE])
+  , ("OP_FALSE;OP_TRUE;", [CmdOpcode OP_FALSE, CmdOpcode OP_TRUE])
+  , ("OP_FALSE\nOP_TRUE;", [CmdOpcode OP_FALSE, CmdOpcode OP_TRUE])
+  , ("DATA 23;", [DATA 0x23])
   ]
 
 badCases = [
-  "OP_DOESNOTEXIST;"
+  "OP_DOESNOTEXIST;", "foo\n"
   ]
 
 good :: [Test]
