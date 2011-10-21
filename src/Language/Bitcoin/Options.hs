@@ -23,6 +23,16 @@ data Options = Options {
 	, optHelp :: Bool
 } deriving Show
 
+defaultOptions :: Options
+defaultOptions = Options { 
+	  optInput = "-"
+	, optOutput = "-"
+	, optSimulator = False
+	, optAssembler = False
+	, optDisassembler = False
+	, optHelp = False
+}
+
 -- options :: String -> [String] -> Either String Options {{{1
 options :: String -> [String] -> Either String Options
 options prg argv =
@@ -50,23 +60,14 @@ usage prg = usageInfo ("Usage: " ++ prg ++ " OPTIONS") available_options
 
 available_options :: [OptDescr (Options -> Options)]
 available_options = [
-	  Option ['i'] ["input"] (ReqArg (\x opts -> opts {optInput = x}) "input") "input file"
-	, Option ['o'] ["output"] (ReqArg (\x opts -> opts {optOutput = x}) "output") "output file"
+	  Option ['i'] ["input"] (ReqArg (\x opts -> opts {optInput = x}) "input") "input file (default '-')"
+	, Option ['o'] ["output"] (ReqArg (\x opts -> opts {optOutput = x}) "output") "output file (default '-')"
 	, Option ['s'] ["assembler"] (NoArg (\opts -> opts {optSimulator = True})) "run the simulator"
 	, Option ['a'] ["assembler"] (NoArg (\opts -> opts {optAssembler = True})) "run the assembler"
 	, Option ['d'] ["disassembler"] (NoArg (\opts -> opts {optDisassembler = True})) "run the disassembler"
 	, Option ['h'] ["help"] (NoArg (\opts -> opts {optHelp = True}))  "print help and quit"
 	]
 
-defaultOptions :: Options
-defaultOptions = Options { 
-	  optInput = ""
-	, optOutput = ""
-	, optSimulator = False
-	, optAssembler = False
-	, optDisassembler = False
-	, optHelp = False
-}
 
 b2n :: Bool -> Int
 b2n True = 1
@@ -74,7 +75,5 @@ b2n False = 0
 
 checkOptions :: Options -> Maybe String
 checkOptions opts
-	| optInput opts == optInput defaultOptions = Just "input file required" 
 	| b2n (optSimulator opts) + b2n (optAssembler opts) + b2n (optDisassembler opts) /= 1 = Just "please choose exactly one action to run"
-	| ((optAssembler opts || optDisassembler opts) && (optOutput opts) == (optOutput defaultOptions)) = Just "output required for assembler and dissasembler action"
 	| otherwise = Nothing

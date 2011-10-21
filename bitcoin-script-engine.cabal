@@ -17,7 +17,8 @@ library
   hs-source-dirs:  src
   build-depends:
     bytestring >= 0.9.1.10,
-    parsec >= 3.1.1
+    parsec >= 3.1.1,
+    binary >= 0.5.0.2
   exposed-modules:
     Language.Bitcoin.Types
     Language.Bitcoin.Simulator

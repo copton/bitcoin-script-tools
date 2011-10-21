@@ -1,14 +1,13 @@
 module Language.Bitcoin.Types where
 -- import {{{1
 import Data.Word (Word8)
-import qualified Data.ByteString.Char8 as B
+import qualified Data.ByteString.Lazy as B
  
 -- types {{{1
 type Binary = B.ByteString
-type Code = B.ByteString
+type Code = String
 
-type Item = [Word8]
-type Stack = [Item]
+type Stack = [Integer]
 type Script = [Opcode]
 
 data Machine = Machine Script Stack Stack deriving Show
@@ -28,7 +27,7 @@ data Result = Result ResultCode Machine deriving Show
 -- data Opcode = {{{1
 data Opcode =
 -- constants {{{2
-    PASTE Data B.ByteString
+    PASTE (Maybe DataOpcode) Integer
   | OP_0 | OP_FALSE
   | OP_1NEGATE
   | OP_1 | OP_TRUE
@@ -150,8 +149,8 @@ data Opcode =
   | OP_NOP10
   deriving (Show, Eq, Read)
 
--- data Data = {{{1
-data Data =
+-- data DataOpcode = {{{1
+data DataOpcode =
 	  DATA Word8
   | OP_PUSHDATA1 Word8
   | OP_PUSHDATA2 Word8 Word8
