@@ -155,7 +155,7 @@ data Opcode =
   | OP_NOP8
   | OP_NOP9
   | OP_NOP10
--- data
+-- data {{{2
   | PUSH Integer
   | OP_PUSHDATA1 Word8 Integer 
   | OP_PUSHDATA2 Word16 Integer
