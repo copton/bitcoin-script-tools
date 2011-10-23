@@ -7,7 +7,7 @@ module Language.Bitcoin.Preprocessor
 -- import {{{1
 import Data.Int (Int32)
 import Language.Bitcoin.Types
-import Language.Bitcoin.Utils (i2b)
+import Language.Bitcoin.Utils (bs, pad)
 import qualified Data.ByteString.Lazy as B
 import qualified Data.List as List
 
@@ -31,11 +31,11 @@ processKey getter number (program, keyring) =
 
 getOrCreate :: Keyring -> Int32 -> (Keyring, Keypair)
 getOrCreate keyring number =
-  let publicKey = i2b $ fromIntegral number in
+  let publicKey = pad 64 $ bs $ fromIntegral number in
   case List.find ((==publicKey) . keyPublic) keyring of
     Nothing ->
       let
-        privateKey = i2b $ fromIntegral $ -1 * number
+        privateKey = pad 64 $ bs $ fromIntegral $ -1 * number
         keypair = Keypair publicKey privateKey
       in
         (keypair : keyring, keypair)
@@ -46,7 +46,8 @@ push :: B.ByteString -> Opcode
 push data_ = OP_PUSHDATA (pushType (B.length data_)) data_
   where
     pushType size
-      | size <= 75 = Direct
+      | size == 0 = error "internal error"
+      | size <= 0x75 = Direct
       | size <= 0xff = OneByte
       | size <= 0xffff = TwoBytes
       | otherwise = FourBytes

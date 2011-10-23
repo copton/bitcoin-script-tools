@@ -42,4 +42,4 @@ testSimpleOps = map runTest simpleOps
 			case run_interpreter' (Machine script [] stack []) of
 				Result Success (Machine _ _ stack' _) -> expected @=? stack' 
 				Result (Failure _) (Machine _ _ stack' _) -> expected @=? stack'
-				result -> assertString $ show result
+				result -> assertFailure $ show result

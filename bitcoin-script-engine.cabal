@@ -45,4 +45,5 @@ executable Test
   other-modules:
     Language.Bitcoin.Test.Interpreter
     Language.Bitcoin.Test.Parser
+    Language.Bitcoin.Test.Preprocessor
     Language.Bitcoin.Test.Utils

@@ -11,7 +11,6 @@ import Test.HUnit
 import qualified Data.ByteString.Lazy as B
 import qualified Data.List as List
 
-import Debug.Trace (trace)
 tests = TestLabel "Parser" $ TestList $ good ++ bad
 
 goodCases = [
@@ -43,7 +42,7 @@ good = map runTest goodCases
   where
     runTest (code, expected) = TestCase $
       case run_parser "<<test>>" code of
-        Left e -> assertString e
+        Left e -> assertFailure e
         Right script -> expected @=? script
 
 
@@ -53,7 +52,7 @@ bad = map runTest badCases
     runTest code = TestCase $
       case run_parser "<<test>>" code of
         Left err -> putStrLn $ infoString code err
-        Right _ -> assertString "Parser should have failed"
+        Right _ -> assertFailure "Parser should have failed"
 
 infoString :: String -> String -> String
 infoString code err =

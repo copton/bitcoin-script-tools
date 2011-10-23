@@ -14,7 +14,7 @@ type Stack = [B.ByteString]
 data Keypair = Keypair {
     keyPublic :: B.ByteString
   , keyPrivate :: B.ByteString
-  } deriving (Show)
+  } deriving (Show, Eq)
 
 type Keyring = [Keypair]
 
