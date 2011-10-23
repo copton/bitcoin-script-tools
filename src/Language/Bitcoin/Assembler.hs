@@ -1,7 +1,7 @@
 module Language.Bitcoin.Assembler
 -- export {{{1
 (
-	run_assembler, run_disassembler
+	run_assembler
 ) where
 
 -- imports
@@ -11,9 +11,6 @@ import Language.Bitcoin.Types
 run_assembler :: Code -> Binary
 run_assembler = undefined
 
--- run_disassembler :: Binary -> Code {{{1
-run_disassembler :: Binary -> Code
-run_disassembler = undefined
 
 --opcodes :: [(Opcode, Int)]
 --opcodes = [

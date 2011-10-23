@@ -20,10 +20,13 @@ library
     parsec >= 3.1.1,
     binary >= 0.5.0.2
   exposed-modules:
-    Language.Bitcoin.Types
-    Language.Bitcoin.Simulator
     Language.Bitcoin.Assembler
+    Language.Bitcoin.Disassembler
+    Language.Bitcoin.Interpreter
     Language.Bitcoin.Parser
+    Language.Bitcoin.Printer
+    Language.Bitcoin.Types
+    Language.Bitcoin.Utils
 
 executable bitcoin-script
   hs-source-dirs:  src
@@ -40,5 +43,6 @@ executable Test
   build-depends:
     HUnit >= 1.2.2.1
   other-modules:
-    Language.Bitcoin.Test.Simulator
+    Language.Bitcoin.Test.Interpreter
     Language.Bitcoin.Test.Parser
+    Language.Bitcoin.Test.Utils

@@ -1,7 +1,7 @@
 module Language.Bitcoin.Main where
 
 import Language.Bitcoin.Options
-import Language.Bitcoin.Simulator (run_simulator)
+import Language.Bitcoin.Interpreter (run_interpreter)
 import Language.Bitcoin.Preprocessor (run_preprocessor)
 --import Language.Bitcoin.Assembler (run_assembler, run_disassembler)
 import Language.Bitcoin.Parser (run_parser)
@@ -21,7 +21,7 @@ runAction :: Options -> IO ()
 runAction opts
   | optAssembler opts = assembler opts
   | optDisassembler opts = disassembler opts
-  | optSimulator opts = simulator opts
+  | optSimulator opts = interpreter opts
   | otherwise = error "internal error"
 
 assembler :: Options -> IO ()
@@ -30,14 +30,13 @@ assembler = undefined
 disassembler :: Options -> IO ()
 disassembler = undefined
 
-simulator :: Options -> IO ()
-simulator opts = do
+interpreter :: Options -> IO ()
+interpreter opts = do
   (hIn, name) <- fileIn $ optInput opts
   code <- hGetContents hIn
   result <- exitOnError $
         run_parser name code 
-    >>= run_preprocessor
-    >>= run_simulator
+    >>= (uncurry run_interpreter) . run_preprocessor
     >>= return . show
   hOut <- fileOut $ optOutput opts
   hPutStr hOut result

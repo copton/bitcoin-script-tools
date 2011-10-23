@@ -1,13 +1,52 @@
 module Language.Bitcoin.Preprocessor
+-- export {{{1
 (
   run_preprocessor
 ) where
 
+-- import {{{1
+import Data.Int (Int32)
 import Language.Bitcoin.Types
+import Language.Bitcoin.Utils (i2b)
+import qualified Data.ByteString.Lazy as B
+import qualified Data.List as List
 
-run_preprocessor :: Script -> Either String Program
-run_preprocessor script = Right $ foldr process [] script
+-- run_preprocessor :: Script -> (Program, Keyring) {{{1
+run_preprocessor :: Script -> (Program, Keyring)
+run_preprocessor script = foldr process ([], []) script
 
-process :: Command -> Program -> Program
-process (CmdOpcode op) program = op : program
-process _ _ = error "TODO"
+
+process :: Command -> (Program, Keyring) -> (Program, Keyring)
+process (CmdOpcode op) (program, keyring) = (op : program, keyring)
+process (KEY number) x = processKey keyPublic number x
+process (SIG number) x = processKey keyPrivate number x
+process (DATA data_) (program, keyring) = (push data_ : program, keyring)
+
+
+processKey :: (Keypair -> B.ByteString) -> Int32 -> (Program, Keyring) -> (Program, Keyring)
+processKey getter number (program, keyring) =
+  let (keyring', keypair) = getOrCreate keyring number in
+  (OP_PUSHDATA Direct (getter keypair) : program, keyring')
+
+
+getOrCreate :: Keyring -> Int32 -> (Keyring, Keypair)
+getOrCreate keyring number =
+  let publicKey = i2b $ fromIntegral number in
+  case List.find ((==publicKey) . keyPublic) keyring of
+    Nothing ->
+      let
+        privateKey = i2b $ fromIntegral $ -1 * number
+        keypair = Keypair publicKey privateKey
+      in
+        (keypair : keyring, keypair)
+    Just keypair -> (keyring, keypair)
+
+
+push :: B.ByteString -> Opcode
+push data_ = OP_PUSHDATA (pushType (B.length data_)) data_
+  where
+    pushType size
+      | size <= 75 = Direct
+      | size <= 0xff = OneByte
+      | size <= 0xffff = TwoBytes
+      | otherwise = FourBytes

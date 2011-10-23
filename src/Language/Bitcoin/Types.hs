@@ -1,7 +1,7 @@
 module Language.Bitcoin.Types where
 -- import {{{1
-import Data.Word (Word8, Word16, Word32)
 import qualified Data.ByteString.Lazy as B
+import Data.Int (Int32)
 
 -- types {{{1
 type Binary = B.ByteString
@@ -9,15 +9,21 @@ type Script = [Command]
 type Program = [Opcode]
 type Code = String
 
-data Item =
-    Raw Integer
-  | Key Int
-  | Sig Int
-  deriving (Show, Eq)
+type Stack = [B.ByteString]
 
-type Stack = [Item]
+data Keypair = Keypair {
+    keyPublic :: B.ByteString
+  , keyPrivate :: B.ByteString
+  } deriving (Show)
 
-data Machine = Machine Program Stack Stack deriving Show
+type Keyring = [Keypair]
+
+data Machine = Machine {
+    mchProgram :: Program
+  , mchKeyring :: Keyring
+  , mchStack :: Stack
+  , mchAltStack :: Stack
+  } deriving Show
 
 data ResultCode =
     Success
@@ -156,16 +162,20 @@ data Opcode =
   | OP_NOP9
   | OP_NOP10
 -- data {{{2
-  | PUSH Integer
-  | OP_PUSHDATA1 Word8 Integer 
-  | OP_PUSHDATA2 Word16 Integer
-  | OP_PUSHDATA4 Word32 Integer
+  | OP_PUSHDATA PushDataType B.ByteString
+  deriving (Show, Eq, Read)
+
+data PushDataType =
+    Direct
+  | OneByte
+  | TwoBytes
+  | FourBytes
   deriving (Show, Eq, Read)
 
 -- data Command = {{{1
 data Command =
     CmdOpcode Opcode
-  | DATA Integer
-  | KEY Int
-  | SIG Int
+  | DATA B.ByteString
+  | KEY Int32
+  | SIG Int32
   deriving (Show, Eq)
