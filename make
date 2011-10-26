@@ -58,7 +58,7 @@ def diff_code(text):
         proc = subprocess.Popen(["wdiff", inf, outf])
         proc.wait()
 
-(code, out, err) = execute("runhaskell Setup.hs build")
+(code, out, err) = execute("cabal-dev install")
 if code != 0:
     open("./.quickfix", "w").write(err)
     notify(getFirstLine(err, isBuildError), "red")

@@ -8,8 +8,11 @@ author:         Alexander Bernauer <alex@copton.net>
 maintainer:     Alexander Bernauer <alex@copton.net>
 license:        LGPL-3
 license-file:   LICENSE
-data-files:     src
 description:    An inofficial implementation of the Bitcoin Script engine
+
+data-files:
+  README,
+  LICENSE
 
 library
   build-depends:   base >= 4
