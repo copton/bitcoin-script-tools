@@ -62,7 +62,7 @@ available_options :: [OptDescr (Options -> Options)]
 available_options = [
 	  Option ['i'] ["input"] (ReqArg (\x opts -> opts {optInput = x}) "input") "input file (default '-')"
 	, Option ['o'] ["output"] (ReqArg (\x opts -> opts {optOutput = x}) "output") "output file (default '-')"
-	, Option ['s'] ["assembler"] (NoArg (\opts -> opts {optSimulator = True})) "run the simulator"
+	, Option ['e'] ["execute"] (NoArg (\opts -> opts {optSimulator = True})) "run the interpreter"
 	, Option ['a'] ["assembler"] (NoArg (\opts -> opts {optAssembler = True})) "run the assembler"
 	, Option ['d'] ["disassembler"] (NoArg (\opts -> opts {optDisassembler = True})) "run the disassembler"
 	, Option ['h'] ["help"] (NoArg (\opts -> opts {optHelp = True}))  "print help and quit"

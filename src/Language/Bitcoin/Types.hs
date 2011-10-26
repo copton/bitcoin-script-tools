@@ -2,6 +2,7 @@ module Language.Bitcoin.Types where
 -- import {{{1
 import qualified Data.ByteString.Lazy as B
 import Data.Int (Int32)
+import qualified Data.List as List
 
 -- types {{{1
 type Binary = B.ByteString
@@ -23,22 +24,17 @@ data Machine = Machine {
   , mchKeyring :: Keyring
   , mchStack :: Stack
   , mchAltStack :: Stack
-  } deriving Show
+  }
 
 data ResultCode =
     Success
   | Failure String
   | Error String
 
-instance Show ResultCode where
-  show Success = "Bitcoin script completed successfully."
-  show (Failure what) = "Bitcoin script failed: " ++ what
-  show (Error what) = "Bitcoin script is illegal: " ++ what
 
-data Result = Result ResultCode Machine deriving Show
+data Result = Result ResultCode Machine
 
--- data Opcode = {{{1
-data Opcode =
+data Opcode = -- {{{1
 -- constants {{{2
     OP_FALSE
   | OP_TRUE
@@ -172,10 +168,10 @@ data PushDataType =
   | FourBytes
   deriving (Show, Eq, Read)
 
--- data Command = {{{1
-data Command =
+data Command = -- {{{1
     CmdOpcode Opcode
   | DATA B.ByteString
   | KEY Int32
   | SIG Int32
   deriving (Show, Eq)
+

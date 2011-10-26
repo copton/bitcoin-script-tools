@@ -6,6 +6,7 @@ module Language.Bitcoin.Test.Interpreter
 import Language.Bitcoin.Interpreter (run_interpreter')
 import Language.Bitcoin.Types
 import Language.Bitcoin.Utils
+import Language.Bitcoin.Text (print_result)
 import Test.HUnit
 
 tests = TestLabel "Simulator" $ TestList testSimpleOps
@@ -42,4 +43,4 @@ testSimpleOps = map runTest simpleOps
 			case run_interpreter' (Machine script [] stack []) of
 				Result Success (Machine _ _ stack' _) -> expected @=? stack' 
 				Result (Failure _) (Machine _ _ stack' _) -> expected @=? stack'
-				result -> assertFailure $ show result
+				result -> assertFailure $ print_result result

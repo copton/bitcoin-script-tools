@@ -5,6 +5,7 @@ import Language.Bitcoin.Interpreter (run_interpreter)
 import Language.Bitcoin.Preprocessor (run_preprocessor)
 --import Language.Bitcoin.Assembler (run_assembler, run_disassembler)
 import Language.Bitcoin.Parser (run_parser)
+import Language.Bitcoin.Text (print_result)
 import System.Environment (getArgs, getProgName)
 import System.Exit (exitWith, ExitCode(ExitFailure))
 import System.IO (stderr, hPutStrLn, hGetContents, hPutStr, hFlush, Handle, stdin, stdout, openFile, IOMode(ReadMode, WriteMode))
@@ -37,7 +38,7 @@ interpreter opts = do
   result <- exitOnError $
         run_parser name code 
     >>= (uncurry run_interpreter) . run_preprocessor
-    >>= return . show
+    >>= return . print_result
   hOut <- fileOut $ optOutput opts
   hPutStr hOut result
   hFlush hOut

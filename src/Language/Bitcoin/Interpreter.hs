@@ -5,11 +5,12 @@ module Language.Bitcoin.Interpreter
 
 import Language.Bitcoin.Types
 import Language.Bitcoin.Utils (b2i, i2b)
+import Language.Bitcoin.Text (print_result)
 
 run_interpreter :: Program -> Keyring -> Either String Result
 run_interpreter program keyring =
   case run_interpreter' (Machine program keyring [] [])  of
-    result@(Result (Error _) _) -> Left $ show result
+    result@(Result (Error _) _) -> Left $ print_result result
     result -> Right result
 
 run_interpreter' :: Machine -> Result

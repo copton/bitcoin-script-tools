@@ -28,6 +28,7 @@ library
     Language.Bitcoin.Interpreter
     Language.Bitcoin.Parser
     Language.Bitcoin.Printer
+    Language.Bitcoin.Text
     Language.Bitcoin.Types
     Language.Bitcoin.Utils
 
