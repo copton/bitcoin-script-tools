@@ -1,6 +1,6 @@
 module Language.Bitcoin.Utils
 (
-  b2i, b2i', i2b, bsLength, pad, unpad, bs
+  b2i, b2i', i2b, bsLength, pad, unpad, bs, bsIsTrue
 ) where
 
 import qualified Data.ByteString.Lazy as B
@@ -73,3 +73,8 @@ extractSign string = assert (B.length string == 4) $
     then (-1, (msb - 0x70) `B.cons` rest)
     else (1, msb `B.cons` rest)
 
+bsIsTrue :: B.ByteString -> Bool
+bsIsTrue string =
+  case b2i string of
+    Left _ -> False
+    Right value -> value == 1

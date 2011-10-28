@@ -6,7 +6,7 @@ module Language.Bitcoin.Interpreter
 
 import Control.Arrow ((***), Arrow)
 import Language.Bitcoin.Types
-import Language.Bitcoin.Utils (b2i, i2b)
+import Language.Bitcoin.Utils (b2i, i2b, bsIsTrue)
 import Language.Bitcoin.Text (print_result)
 import qualified Data.ByteString.Lazy as B
 
@@ -38,10 +38,7 @@ run_interpreter' machine@(Machine (op:rest) keyring stack altStack) =
 		Right (stack') -> run_interpreter' (Machine rest keyring stack' altStack)
 
 topIsTrue :: [B.ByteString] -> Bool
-topIsTrue (x:_) =
-  case b2i x of
-    Left _ -> False
-    Right value -> value == 1
+topIsTrue (x:_) = bsIsTrue x
 topIsTrue _ = False
 
 simpleOp :: Opcode -> Stack -> Either ResultCode Stack
@@ -73,7 +70,7 @@ simpleOp OP_VERIFY stack =
     then Right $ tail stack
     else Left $ Failure $ "OP_VERIFY failed because top stack value is not True."
 
-simpleOp OP_IFDUP _ = Left $ Error "OP_IFDUP is broken, so it's not supported."
+simpleOp OP_IFDUP stack = stackOp stack 1 (\(x:xs) -> Right (if bsIsTrue x then x:x:xs else x:xs))
 simpleOp OP_DEPTH stack = Right $ ((i2b . fromIntegral . length) stack) : stack
 simpleOp OP_DROP stack = stackOp stack 1 (\(_:xs) -> Right xs)
 simpleOp OP_DUP stack = stackOp stack 1 (\(x:xs) -> Right $ x:x:xs)

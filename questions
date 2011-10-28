@@ -1,0 +1,8 @@
+== IFDUP
+wiki says: If the input is true or false, duplicate it
+code says: if (CastToBool(vch)) stack.push_back(vch)
+	and CastToBool casts the byte string to a bool
+report bug?
+
+== Encoding of numbers as byte strings
+check openssl bignum implementation

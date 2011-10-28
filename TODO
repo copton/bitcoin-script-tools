@@ -1,0 +1,8 @@
+openssl - bignum über FFI verwenden
+	es gibt vlt. schon ein Haskell-Paket dafür
+
+ByteStream strict verwenden.
+	[Word8] vermeiden
+	attoParsc Library
+
+QuickCheck mit Referenzimplementierung zum Testen verwenden.
