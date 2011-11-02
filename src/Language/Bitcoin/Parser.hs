@@ -10,7 +10,7 @@ import Language.Bitcoin.Utils (b2i, bsLength)
 import Text.ParserCombinators.Parsec (Parser, parse, spaces, endBy, eof, many, (<|>), (<?>), alphaNum, char, hexDigit, newline, unexpected)
 import Text.Parsec.Prim (parserFail)
 import Control.Monad (liftM, when)
-import qualified Data.ByteString.Lazy as B
+import qualified Data.ByteString as B
 import qualified Data.Char as C
 import Data.Word (Word8)
 import Data.Int (Int32)

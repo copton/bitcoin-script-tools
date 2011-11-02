@@ -8,7 +8,7 @@ import Language.Bitcoin.Parser (run_parser)
 import Language.Bitcoin.Types
 import Language.Bitcoin.Utils (bs)
 import Test.HUnit
-import qualified Data.ByteString.Lazy as B
+import qualified Data.ByteString as B
 import qualified Data.List as List
 
 tests = TestLabel "Parser" $ TestList $ good ++ bad

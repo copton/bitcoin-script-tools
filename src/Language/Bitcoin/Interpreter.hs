@@ -8,7 +8,7 @@ import Control.Arrow ((***), Arrow)
 import Language.Bitcoin.Types
 import Language.Bitcoin.Utils (b2i, i2b, bsIsTrue)
 import Language.Bitcoin.Text (print_result)
-import qualified Data.ByteString.Lazy as B
+import qualified Data.ByteString as B
 
 run_interpreter :: Program -> Keyring -> Either String Result
 run_interpreter program keyring =

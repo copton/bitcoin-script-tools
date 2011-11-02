@@ -3,7 +3,7 @@ module Language.Bitcoin.Utils
   b2i, b2i', i2b, bsLength, pad, unpad, bs, bsIsTrue
 ) where
 
-import qualified Data.ByteString.Lazy as B
+import qualified Data.ByteString as B
 import Control.Exception.Base (assert)
 import Data.Int (Int32)
 import Data.Ix (inRange)

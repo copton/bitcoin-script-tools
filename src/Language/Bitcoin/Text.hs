@@ -9,7 +9,7 @@ import Language.Bitcoin.Types
 import Data.Char (intToDigit)
 import Data.List (intersperse)
 import Data.Word (Word8)
-import qualified Data.ByteString.Lazy as B
+import qualified Data.ByteString as B
 
 print_result :: Result -> String -- {{{1
 print_result (Result code machine) = print_result_code code ++ "\n" ++ print_machine machine

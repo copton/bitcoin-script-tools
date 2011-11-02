@@ -1,6 +1,6 @@
 module Language.Bitcoin.Types where
 -- import {{{1
-import qualified Data.ByteString.Lazy as B
+import qualified Data.ByteString as B
 import Data.Int (Int32)
 import qualified Data.List as List
 

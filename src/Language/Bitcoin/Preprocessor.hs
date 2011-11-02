@@ -8,7 +8,7 @@ module Language.Bitcoin.Preprocessor
 import Data.Int (Int32)
 import Language.Bitcoin.Types
 import Language.Bitcoin.Utils (bs, pad)
-import qualified Data.ByteString.Lazy as B
+import qualified Data.ByteString as B
 import qualified Data.List as List
 
 -- run_preprocessor :: Script -> (Program, Keyring) {{{1

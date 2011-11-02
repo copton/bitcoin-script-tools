@@ -4,7 +4,7 @@ module Language.Bitcoin.Test.Utils
 ) where
 
 import Language.Bitcoin.Utils (b2i', i2b, unpad)
-import qualified Data.ByteString.Lazy as B
+import qualified Data.ByteString as B
 import Test.HUnit
 
 b2iTestCases = [
