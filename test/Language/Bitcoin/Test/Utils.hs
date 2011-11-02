@@ -6,7 +6,6 @@ module Language.Bitcoin.Test.Utils
 import Language.Bitcoin.Utils (b2i', i2b, unpad)
 import qualified Data.ByteString.Lazy as B
 import Test.HUnit
-import Data.Tuple (swap)
 
 b2iTestCases = [
     ([0x23], 0x23)
@@ -43,3 +42,6 @@ i2bTests = map runTest i2bTestCases
   where
     runTest (input, expected) = TestCase $
       expected @=? (B.unpack $ i2b input)
+
+-- avoid swap from Data.Tuple. It has been added to base 4.3 and GHC 6 uses base < 4.3
+swap (x, y) = (y, x)

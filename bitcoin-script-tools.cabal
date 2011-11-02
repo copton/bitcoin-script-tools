@@ -11,6 +11,10 @@ license:        GPL-3
 license-file:   LICENSE
 description:    An inofficial implementation of Bitcoin Script tools
 
+tested-with:
+  GHC == 6.12.1,
+  GHC == 7.0.3
+
 data-files:
   README,
   LICENSE
