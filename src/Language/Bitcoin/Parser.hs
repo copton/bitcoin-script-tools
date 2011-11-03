@@ -7,13 +7,15 @@ module Language.Bitcoin.Parser
 -- import {{{1
 import Language.Bitcoin.Types
 import Language.Bitcoin.Utils (b2i, bsLength)
-import Text.ParserCombinators.Parsec (Parser, parse, spaces, endBy, eof, many, (<|>), (<?>), alphaNum, char, hexDigit, newline, unexpected)
+import Text.ParserCombinators.Parsec (Parser, parse, sepEndBy, eof, many, (<|>), (<?>), alphaNum, char, hexDigit, newline, unexpected, satisfy)
 import Text.Parsec.Prim (parserFail)
 import Control.Monad (liftM, when)
 import qualified Data.ByteString as B
 import qualified Data.Char as C
 import Data.Word (Word8)
 import Data.Int (Int32)
+import Data.Char (isSpace)
+import Data.Maybe (catMaybes)
 
 -- run_parser :: String -> Code -> Either String Script {{{1
 run_parser :: String -> Code -> Either String Script
@@ -24,24 +26,30 @@ run_parser source code =
 
 script :: Parser Script
 script = do
-  spaces
-  ops <- endBy operation separator
-  eof
+  ops <- liftM catMaybes $ sepEndBy operation separator
+  spaces >> eof
   return ops
 
-operation :: Parser Command
-operation = do
-  command <- many (alphaNum <|> char '_' <?> "opcode") 
-  case command of
-    "DATA" -> spaces >> liftM DATA hexString
-    "KEY" -> keyOrSig KEY
-    "SIG" -> keyOrSig SIG
-    "OP_PUSHDATA" -> push
-    "OP_PUSHDATA1" -> push1
-    "OP_PUSHDATA2" -> push2
-    "OP_PUSHDATA4" -> push4
-    x -> opcode x
+separator :: Parser Char
+separator =  spaces >> (newline <|> char ';')
 
+spaces :: Parser String
+spaces = many (satisfy (\c -> isSpace c && not (c =='\n')))
+
+operation :: Parser (Maybe Command)
+operation = do
+  command <- spaces >> many (alphaNum <|> char '_' <?> "opcode") 
+  if command == ""
+    then return Nothing
+    else liftM Just $ case command of
+      "DATA" -> spaces >> liftM DATA hexString
+      "KEY" -> keyOrSig KEY
+      "SIG" -> keyOrSig SIG
+      "OP_PUSHDATA" -> push
+      "OP_PUSHDATA1" -> push1
+      "OP_PUSHDATA2" -> push2
+      "OP_PUSHDATA4" -> push4
+      x -> opcode x
 
 keyOrSig :: (Int32 -> Command) -> Parser Command
 keyOrSig createCommand = do
@@ -100,9 +108,6 @@ hexByte = do
   upperNibble <- hexDigit
   lowerNibble <- hexDigit
   return $ fromIntegral $ (C.digitToInt upperNibble) * 16 + (C.digitToInt lowerNibble)
-
-separator :: Parser Char
-separator = newline <|> char ';'
 
 liftReadS :: ReadS a -> String -> Parser a
 liftReadS f s =
