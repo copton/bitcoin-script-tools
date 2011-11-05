@@ -23,6 +23,7 @@ A program is a sequence of opcodes. Opcodes are separated by semicolon or newlin
 Bitcoin Script specifies no opcode when pushing up to 75 bytes. To keep the text format consistent, the parser requires the `OP_PUSHDATA <length> <data>` opcode in this case instead.
 
 Furthermore, the parser supports additional syntactic sugar opcodes that are translated to base opcodes by an internal preprocessor:
+
 * The `DATA <data>` opcode can be used to push data to the stack without having to specify an explicit length parameter. Depending on the length of the data, this opcode is translated to `OP_PUSHDATA`, `OP_PUSHDATA1`, `OP_PUSHDATA2` or `OP_PUSHDATA4`. Hereby, latter opcodes are only chosen if the data's size exceeds what former opcodes support.
 * The `KEY <id>` and `SIG <id>` can be used to push keys and signatures to the stack without having to actually generate a valid key pair and a valid signature. The semantics is that a `SIG <id>` matches a `KEY <id>` if and only if both opcodes use the same id parameter. The proprocessor generates the necessary keys and signatures and replaces these opcodes with a corresponding `OP_PUSHDATA` opcode. 
 
