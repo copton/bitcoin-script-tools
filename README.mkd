@@ -1,0 +1,37 @@
+Bitcoin Script Tools
+====================
+
+About
+-----
+
+This is an inofficial implementation of [Bitcoin Script](https://en.bitcoin.it/wiki/Script). The goal is to have a set of tools that allow us to research the possibilities of Bitcoin scripts and to experiment with Bitcoin contracts. To this end we try to stay compatible with the official Bitcoin implementation.
+
+In Bitcoin script, signatures refer to transaction objects. We do not support user-defined transaction objects yet. Instead we assume that the given script is the concatenation of a signature script and a public key script of a default transaction object.
+
+Tools
+-----
+* Parser
+* Pretty-Printer
+* Assembler
+* Disassembler
+* Interpreter
+
+Text Format
+-----------
+A program is a sequence of opcodes. Opcodes are separated by semicolon or newline. Comments start with '#' and go until the end of the line. Some opcodes have additional parameters. These parameters are separated by at least one white space. All parameters are interpreted as hexadecimal numbers while "0x" prefixes are not allowed.
+
+Bitcoin Script specifies no opcode when pushing up to 75 bytes. To keep the text format consistent, the parser requires the `OP_PUSHDATA <length> <data>` opcode in this case instead.
+
+Furthermore, the parser supports additional syntactic sugar opcodes that are translated to base opcodes by an internal preprocessor:
+* The `DATA <data>` opcode can be used to push data to the stack without having to specify an explicit length parameter. Depending on the length of the data, this opcode is translated to `OP_PUSHDATA`, `OP_PUSHDATA1`, `OP_PUSHDATA2` or `OP_PUSHDATA4`. Hereby, latter opcodes are only chosen if the data's size exceeds what former opcodes support.
+* The `KEY <id>` and `SIG <id>` can be used to push keys and signatures to the stack without having to actually generate a valid key pair and a valid signature. The semantics is that a `SIG <id>` matches a `KEY <id>` if and only if both opcodes use the same id parameter. The proprocessor generates the necessary keys and signatures and replaces these opcodes with a corresponding `OP_PUSHDATA` opcode. 
+
+The pretty-printer does not generate syntactic sugar opcodes. This means that `code = print(parse(code))` is only true if no syntactic sugar opcodes are used in the code.
+
+Byte Format
+-----------
+Our goal is to be byte compatible with the official Bitcoin implementation.
+
+Interpreter
+-----------
+The interpreter executes bitcoin scripts and reports one of three possible results. A script succeeds if and only if all opcodes have been executed and the topmost stack element is `True`. In contrast, if all all opcodes have been executed and the topmost element is not `True`, the script fails. In addition, special opcodes can cause the script to suceed or fail early. Finally, a script can cause a runtime error if the execution of an opcode fails, for example because there are not enough operants on the stack.
