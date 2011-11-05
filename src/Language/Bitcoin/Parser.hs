@@ -5,51 +5,62 @@ module Language.Bitcoin.Parser
 ) where
 
 -- import {{{1
+import Control.Monad (liftM, when)
+import Data.Char (isSpace)
+import Data.Int (Int32)
+import Data.Maybe (catMaybes)
+import Data.Word (Word8)
 import Language.Bitcoin.Types
 import Language.Bitcoin.Utils (b2i, bsLength)
-import Text.ParserCombinators.Parsec (Parser, parse, sepEndBy, eof, many, (<|>), (<?>), alphaNum, char, hexDigit, newline, unexpected, satisfy)
-import Text.Parsec.Prim (parserFail)
-import Control.Monad (liftM, when)
 import qualified Data.ByteString as B
 import qualified Data.Char as C
-import Data.Word (Word8)
-import Data.Int (Int32)
-import Data.Char (isSpace)
-import Data.Maybe (catMaybes)
+import qualified Data.List as List
+import Text.Parsec.Prim (parserFail)
+import Text.ParserCombinators.Parsec (Parser, parse, sepEndBy, eof, many, (<|>), (<?>), alphaNum, char, hexDigit, newline, unexpected, satisfy)
 
 -- run_parser :: String -> Code -> Either String Script {{{1
 run_parser :: String -> Code -> Either String Script
 run_parser source code =
-  case parse script source code of
+  case parse script source (removeComments code) of
     Left parseError -> Left $ show parseError
     Right x -> Right x
 
+removeComments :: String -> String
+removeComments [] = []
+removeComments string =
+  let
+    (code, rest) = List.break (=='#') string 
+    (_, string') = List.break (=='\n') rest
+  in code ++ removeComments string'
+
 script :: Parser Script
 script = do
-  ops <- liftM catMaybes $ sepEndBy operation separator
-  spaces >> eof
+  ops <- spaces >> (liftM catMaybes $ sepEndBy operation separator)
+  eof
   return ops
 
-separator :: Parser Char
-separator =  spaces >> (newline <|> char ';')
+separator :: Parser ()
+separator = (newline <|> char ';') >> spaces >> return ()
 
 spaces :: Parser String
 spaces = many (satisfy (\c -> isSpace c && not (c =='\n')))
 
 operation :: Parser (Maybe Command)
 operation = do
-  command <- spaces >> many (alphaNum <|> char '_' <?> "opcode") 
-  if command == ""
-    then return Nothing
-    else liftM Just $ case command of
-      "DATA" -> spaces >> liftM DATA hexString
-      "KEY" -> keyOrSig KEY
-      "SIG" -> keyOrSig SIG
-      "OP_PUSHDATA" -> push
-      "OP_PUSHDATA1" -> push1
-      "OP_PUSHDATA2" -> push2
-      "OP_PUSHDATA4" -> push4
-      x -> opcode x
+  op <- do
+    command <- many (alphaNum <|> char '_' <?> "opcode") 
+    if command == ""
+      then return Nothing
+      else liftM Just $ case command of
+        "DATA" -> spaces >> liftM DATA hexString
+        "KEY" -> keyOrSig KEY
+        "SIG" -> keyOrSig SIG
+        "OP_PUSHDATA" -> push
+        "OP_PUSHDATA1" -> push1
+        "OP_PUSHDATA2" -> push2
+        "OP_PUSHDATA4" -> push4
+        x -> opcode x
+  spaces >> return op
 
 keyOrSig :: (Int32 -> Command) -> Parser Command
 keyOrSig createCommand = do
@@ -65,7 +76,7 @@ push :: Parser Command
 push = pushN checkLength checkValue Direct
   where
     checkLength len = when (len /= 1) $ parserFail "OP_PUSHDATA expects a one byte size parameter"
-    checkValue value = when (value > 75) $ parserFail "OP_PUSHDATA only support up to 0x75 bytes of data"
+    checkValue value = when (value > 75) $ parserFail "OP_PUSHDATA only support up to 75 bytes of data"
 
 push1 :: Parser Command
 push1 = pushN checkLength checkValue OneByte
