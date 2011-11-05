@@ -3,7 +3,7 @@ module Language.Bitcoin.Test.Interpreter
 	tests
 ) where
 
-import Language.Bitcoin.Interpreter (run_interpreter')
+import Language.Bitcoin.Interpreter (exec)
 import Language.Bitcoin.Types
 import Language.Bitcoin.Utils
 import Language.Bitcoin.Text (print_result)
@@ -40,7 +40,7 @@ simpleOps = [
 testSimpleOps = map runTest simpleOps
 	where
 		runTest (script, stack, expected) = TestCase $
-			case run_interpreter' (Machine script [] stack []) of
+			case exec (Machine script [] stack []) of
 				Result Success (Machine _ _ stack' _) -> expected @=? stack' 
 				Result (Failure _) (Machine _ _ stack' _) -> expected @=? stack'
 				result -> assertFailure $ print_result result
