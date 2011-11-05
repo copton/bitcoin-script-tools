@@ -23,7 +23,7 @@ library
   ghc-options:     -Wall
   hs-source-dirs:  src
   build-depends:
-    base == 4.3.*,
+    base == 4.2.*,
     bytestring == 0.9.*,
     parsec == 3.1.*,
     binary == 0.5.*
@@ -44,14 +44,14 @@ executable bitcoin-script
     Language.Bitcoin.Main
     Language.Bitcoin.Options
   build-depends:
-    base == 4.3.*
+    base == 4.2.*
   ghc-options:     -Wall
 
 executable Test
   hs-source-dirs: src, test
   main-is: Test.hs
   build-depends:
-    base == 4.3.*,
+    base == 4.2.*,
     HUnit == 1.2.*
   other-modules:
     Language.Bitcoin.Test.Interpreter

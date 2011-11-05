@@ -1,0 +1,50 @@
+
+=======================================================================
+  bitcoin-script-tools v.0.1
+=======================================================================
+
+This installation manual assumes you have already cloned the bitcoin
+script tools from the github repository and that you have switched to
+the installation directory of the package (.../bitcoin-script-tools).
+
+-----------------------------------------------------------------------
+1. Prerequisites
+-----------------------------------------------------------------------
+
+In order to use the bitcoin script tools, some Linux packages have to
+be installed on the local machine. The following description assumes a
+Debian distribution; for other distributions you may have to adjust the
+necessary commands to install the packages:
+
+   $ sudo aptitude install cabal-install ghc6
+
+-----------------------------------------------------------------------
+2. Pull, compile and build Haskell packages
+-----------------------------------------------------------------------
+
+First you should update the cabal-install package itself as it is
+likely that the distribution package is no longer up-to-date; make sure
+you include the executable directory in the search path:
+
+   $ cabal install cabal-install
+   $ export PATH=~/.cabal/bin:$PATH
+
+Next you use cabal to install all required packages for the Haskell
+environment tht are used by the bitcoin script tools:
+
+   $ cabal install cabal-dev
+
+-----------------------------------------------------------------------
+3. Build bitcoin script tools
+-----------------------------------------------------------------------
+
+Now you can compile the bitcoin script tools:
+
+   $ cabal-dev install
+
+-----------------------------------------------------------------------
+4. Run the bitcoin script tools
+-----------------------------------------------------------------------
+
+   $ cabal-dev/bin/bitcoin-script-tools --help
+
