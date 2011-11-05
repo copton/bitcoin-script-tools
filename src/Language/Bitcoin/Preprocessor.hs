@@ -47,7 +47,7 @@ push data_ = OP_PUSHDATA (pushType (B.length data_)) data_
   where
     pushType size
       | size == 0 = error "internal error"
-      | size <= 0x75 = Direct
+      | size <= 75 = Direct
       | size <= 0xff = OneByte
       | size <= 0xffff = TwoBytes
       | otherwise = FourBytes

@@ -65,7 +65,7 @@ push :: Parser Command
 push = pushN checkLength checkValue Direct
   where
     checkLength len = when (len /= 1) $ parserFail "OP_PUSHDATA expects a one byte size parameter"
-    checkValue value = when (value > 0x75) $ parserFail "OP_PUSHDATA only support up to 0x75 bytes of data"
+    checkValue value = when (value > 75) $ parserFail "OP_PUSHDATA only support up to 0x75 bytes of data"
 
 push1 :: Parser Command
 push1 = pushN checkLength checkValue OneByte
