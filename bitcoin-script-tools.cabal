@@ -36,7 +36,7 @@ library
     Language.Bitcoin.Printer
     Language.Bitcoin.Text
     Language.Bitcoin.Types
-    Language.Bitcoin.Utils
+    Language.Bitcoin.Numbers
 
 executable bitcoin-script
   hs-source-dirs:  src

@@ -11,7 +11,6 @@ import Data.Int (Int32)
 import Data.Maybe (catMaybes)
 import Data.Word (Word8)
 import Language.Bitcoin.Types
-import Language.Bitcoin.Utils (b2i, bsLength)
 import qualified Data.ByteString as B
 import qualified Data.Char as C
 import qualified Data.List as List

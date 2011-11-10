@@ -38,7 +38,7 @@ print_data :: B.ByteString -> String
 print_data data_ = concat $ map print_hex $ B.unpack data_
 
 print_stack :: Stack -> String
-print_stack stack = printList print_data stack
+print_stack stack = (show $ head stack) ++ "," ++ (print_stack $ tail stack)
 
 print_opcode :: Opcode -> String
 print_opcode (OP_PUSHDATA pushType data_) = "OP_PUSHDATA " ++ show pushType ++ print_data data_

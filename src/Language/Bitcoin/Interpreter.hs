@@ -11,7 +11,7 @@ import Data.Word (Word8)
 import Data.Int (Int32)
 import Control.Arrow ((***), Arrow)
 import Language.Bitcoin.Types
-import Language.Bitcoin.Utils (b2i, i2b, bsIsTrue)
+import Language.Bitcoin.Numbers
 import Language.Bitcoin.Text (print_result)
 import qualified Data.ByteString as B
 import qualified Data.List as List
@@ -305,6 +305,6 @@ isElse _ = False
 tmap :: Arrow a => a b c -> a (b, b) (c, c)
 tmap f = f *** f
 
-topIsTrue :: [B.ByteString] -> Bool
+topIsTrue :: [BCI] -> Bool
 topIsTrue (x:_) = bsIsTrue x
 topIsTrue _ = False

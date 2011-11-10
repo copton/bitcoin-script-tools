@@ -2,19 +2,19 @@ module Language.Bitcoin.Types where
 -- import {{{1
 import qualified Data.ByteString as B
 import Data.Int (Int32)
-import qualified Data.List as List
+import Language.Bitcoin.Numbers
 
 -- types {{{1
-type Binary = B.ByteString
 type Script = [Command]
 type Program = [Opcode]
+type Binary = B.ByteString
 type Code = String
 
-type Stack = [B.ByteString]
+type Stack = [BCI]
 
 data Keypair = Keypair {
-    keyPublic :: B.ByteString
-  , keyPrivate :: B.ByteString
+    keyPublic :: BCI
+  , keyPrivate :: BCI
   } deriving (Show, Eq)
 
 type Keyring = [Keypair]
