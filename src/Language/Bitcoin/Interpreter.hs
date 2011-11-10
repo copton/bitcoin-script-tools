@@ -74,40 +74,40 @@ exec machine@(Machine (op:rest) keyring stack altStack) =
 
 simpleOp :: Opcode -> Stack -> Either ResultCode Stack
 -- constants -- {{{3
-simpleOp OP_FALSE = pushOp (i2b  0)
-simpleOp OP_TRUE  = pushOp (i2b  1)
-simpleOp OP_0     = pushOp (i2b  0)
-simpleOp OP_1     = pushOp (i2b  1)
-simpleOp OP_2     = pushOp (i2b  2) 
-simpleOp OP_3     = pushOp (i2b  3) 
-simpleOp OP_4     = pushOp (i2b  4) 
-simpleOp OP_5     = pushOp (i2b  5) 
-simpleOp OP_6     = pushOp (i2b  6) 
-simpleOp OP_7     = pushOp (i2b  7) 
-simpleOp OP_8     = pushOp (i2b  8) 
-simpleOp OP_9     = pushOp (i2b  9) 
-simpleOp OP_10    = pushOp (i2b 10) 
-simpleOp OP_11    = pushOp (i2b 11) 
-simpleOp OP_12    = pushOp (i2b 12) 
-simpleOp OP_13    = pushOp (i2b 13) 
-simpleOp OP_14    = pushOp (i2b 14) 
-simpleOp OP_15    = pushOp (i2b 15) 
-simpleOp OP_16    = pushOp (i2b 16) 
+simpleOp OP_FALSE = pushOp (BCI False  0)
+simpleOp OP_TRUE  = pushOp (BCI False  1)
+simpleOp OP_0     = pushOp (BCI False  0)
+simpleOp OP_1     = pushOp (BCI False  1)
+simpleOp OP_2     = pushOp (BCI False  2) 
+simpleOp OP_3     = pushOp (BCI False  3) 
+simpleOp OP_4     = pushOp (BCI False  4) 
+simpleOp OP_5     = pushOp (BCI False  5) 
+simpleOp OP_6     = pushOp (BCI False  6) 
+simpleOp OP_7     = pushOp (BCI False  7) 
+simpleOp OP_8     = pushOp (BCI False  8) 
+simpleOp OP_9     = pushOp (BCI False  9) 
+simpleOp OP_10    = pushOp (BCI False 10) 
+simpleOp OP_11    = pushOp (BCI False 11) 
+simpleOp OP_12    = pushOp (BCI False 12) 
+simpleOp OP_13    = pushOp (BCI False 13) 
+simpleOp OP_14    = pushOp (BCI False 14) 
+simpleOp OP_15    = pushOp (BCI False 15) 
+simpleOp OP_16    = pushOp (BCI False 16) 
 
 -- stack -- {{{3
-simpleOp OP_IFDUP = stackOp 1 (\(x:xs) -> if bsIsTrue x then x:x:xs else x:xs)
-simpleOp OP_DEPTH = (\stack -> Right $ (i2b . fromIntegral . length) stack : stack)
+simpleOp OP_IFDUP = stackOp 1 (\(x:xs) -> if isTrue x then x:x:xs else x:xs)
+simpleOp OP_DEPTH = (\stack -> Right $ (BCI False ((fromIntegral . length) stack)) : stack)
 simpleOp OP_DROP  = stackOp 1 (\(_:xs) -> xs)
 simpleOp OP_DUP   = stackOp 1 (\(x:xs) -> x:x:xs)
 simpleOp OP_NIP   = stackOp 2 (\(x:_:xs) -> x:xs)
 simpleOp OP_OVER  = stackOp 2 (\(x1:x2:xs) -> x2:x1:x2:xs)
 
-simpleOp OP_PICK = stackOp' 1 (\(x:xs) -> case b2i x of
+simpleOp OP_PICK = stackOp' 1 (\(x:xs) -> case bci2Int x of
   Left e -> Left $ Error e
   Right n -> let n' = fromIntegral n in
     stackOp n' (\xs' -> head (take n' xs') : xs') xs)
 
-simpleOp OP_ROLL = stackOp' 1 (\(x:xs) -> case b2i x of
+simpleOp OP_ROLL = stackOp' 1 (\(x:xs) -> case bci2Int x of
   Left e -> Left $ Error e
   Right n -> let n' = fromIntegral n in
     stackOp n' (\xs' -> take (n'-1) xs' ++ drop n' xs') xs)
@@ -125,7 +125,7 @@ simpleOp OP_2SWAP = stackOp 4 (\(x1:x2:x3:x4:xs) -> x3:x4:x1:x2:xs)
 -- splice -- {{{3
 simpleOp OP_CAT = stackOp 2 (\(x1:x2:xs) -> (B.append x1 x2) : xs)
 
-simpleOp OP_SUBSTR = stackOp' 3 (\(size:begin:bytes:xs) -> opSubstr (b2i size) (b2i begin) bytes xs)
+simpleOp OP_SUBSTR = stackOp' 3 (\(size:begin:bytes:xs) -> opSubstr (bci2Int size) (bci2Int begin) bytes xs)
   where
     opSubstr (Left e) _ _ _ = Left $ Error e
     opSubstr _ (Left e) _ _ = Left $ Error e
@@ -135,7 +135,7 @@ simpleOp OP_SUBSTR = stackOp' 3 (\(size:begin:bytes:xs) -> opSubstr (b2i size) (
         then Left $ Error "OP_SUBSTR goes beyond the end of the string"
         else Right $ (B.take size' $ B.drop begin' bytes) : xs
 
-simpleOp OP_LEFT = stackOp' 2 (\(size:bytes:xs) -> opLeft (b2i size) bytes xs)
+simpleOp OP_LEFT = stackOp' 2 (\(size:bytes:xs) -> opLeft (bci2Int size) bytes xs)
   where
     opLeft (Left e) _ _ = Left $ Error e
     opLeft (Right size) bytes xs =
@@ -144,7 +144,7 @@ simpleOp OP_LEFT = stackOp' 2 (\(size:bytes:xs) -> opLeft (b2i size) bytes xs)
         then Left $ Error "OP_LEFT goes beyond the end of the string"
         else Right $ (B.take size' bytes) : xs
 
-simpleOp OP_RIGHT = stackOp' 2 (\(size:bytes:xs) -> opRight (b2i size) bytes xs)
+simpleOp OP_RIGHT = stackOp' 2 (\(size:bytes:xs) -> opRight (bci2Int size) bytes xs)
   where
     opRight (Left e) _ _ = Left $ Error e
     opRight (Right size) bytes xs =
@@ -153,14 +153,14 @@ simpleOp OP_RIGHT = stackOp' 2 (\(size:bytes:xs) -> opRight (b2i size) bytes xs)
         then Left $ Error "OP_RIGHT goes beyond the end of the string"
         else Right $ (B.drop size' bytes) : xs
 
-simpleOp OP_SIZE   = stackOp 1 (\(bytes:xs) -> (i2b . fromIntegral . B.length) bytes : xs)
+simpleOp OP_SIZE   = stackOp 1 (\(bytes:xs) -> (int2Bci . fromIntegral . B.length) bytes : xs)
 
 -- Bitwise logic -- {{{3
 simpleOp OP_INVERT = stackOp 1 (\(bytes:xs) -> B.map complement bytes : xs)
 simpleOp OP_AND    = binaryBitwiseOp (.&.)
 simpleOp OP_OR     = binaryBitwiseOp (.|.)
 simpleOp OP_XOR    = binaryBitwiseOp xor
-simpleOp OP_EQUAL  = stackOp 2 (\(x1:x2:xs) -> (if x1 == x2 then i2b 1 else i2b 0) : xs)
+simpleOp OP_EQUAL  = stackOp 2 (\(x1:x2:xs) -> int2Bci (if x1 == x2 then 1 else 0) : xs)
 
 -- arithmetic -- {{{3
 simpleOp OP_1ADD = unaryArithmeticOp (+1)
@@ -189,10 +189,10 @@ simpleOp OP_GREATERTHANOREQUAL = binaryCondition (>=)
 simpleOp OP_MIN = binaryArithmeticOp min
 simpleOp OP_MAX = binaryArithmeticOp max
 simpleOp OP_WITHIN = stackOp' 3 (\(x1:x2:x3:xs) ->
-  case (do n1 <- b2i x1; n2 <- b2i x2; n3 <- b2i x3; return (n1, n2, n3)) of
+  case (do n1 <- bci2Int x1; n2 <- bci2Int x2; n3 <- bci2Int x3; return (n1, n2, n3)) of
     Left e -> Left $ Error e
     Right (n1, n2, n3) -> Right $
-      i2b (if n1 >= n2 && n1 < n3 then 1 else 0) : xs)
+      int2Bci (if n1 >= n2 && n1 < n3 then 1 else 0) : xs)
 
 -- crypto -- {{{3
 simpleOp OP_RIPEMD160 = undefined
@@ -231,28 +231,28 @@ simpleOp (OP_PUSHDATA _ bytes) = pushOp bytes
 simpleOp op = (\_ -> Left $ Error $ "sorry, opcode " ++ show op ++ " is not implemented yet.")
 
 -- ops {{{2
-pushOp :: B.ByteString -> Stack -> Either ResultCode Stack
+pushOp :: BCI -> Stack -> Either ResultCode Stack
 pushOp x xs = Right $ x:xs
 
 unaryArithmeticOp :: (Int32 -> Int32) -> Stack -> Either ResultCode Stack
 unaryArithmeticOp operation = stackOp' 1 (\(x:xs) ->
-  case b2i x of
+  case bci2Int x of
     Left e -> Left $ Error e
-    Right n -> Right $ i2b (operation n) : xs)
+    Right n -> Right $ int2Bci (operation n) : xs)
 
 binaryArithmeticOp :: (Int32 -> Int32 -> Int32) -> Stack -> Either ResultCode Stack
 binaryArithmeticOp operation = stackOp' 2 (\(x1:x2:xs) ->
-  case (b2i x1, b2i x2) of
+  case (bci2Int x1, bci2Int x2) of
     (Left e, _) -> Left $ Error e
     (_, Left e) -> Left $ Error e
-    (Right n1, Right n2) -> Right $ i2b (operation n1 n2) : xs)
+    (Right n1, Right n2) -> Right $ int2Bci (operation n1 n2) : xs)
 
 binaryCondition :: (Int32 -> Int32 -> Bool) -> Stack -> Either ResultCode Stack
 binaryCondition condition = binaryArithmeticOp (\a b -> if condition a b then 1 else 0)
 
 binaryBitwiseOp :: (Word8 -> Word8 -> Word8) -> Stack -> Either ResultCode Stack
 binaryBitwiseOp byteOp = stackOp 2 (\(x1:x2:xs) ->
-  (B.pack $ map (uncurry byteOp) $ zip (B.unpack x1) (B.unpack x2)) : xs)
+  (B.pack $ map (uncurry byteOp) $ zip (B.unpack (bci2Bin x1)) (B.unpack (bci2Bin x2))) : xs)
 
 pseudoOp :: Opcode -> Stack -> Either ResultCode a
 pseudoOp x _ = Left $ Error $ show x ++ " is a pseudo opcode. It can not be executed."
@@ -274,7 +274,7 @@ execIfBlock _ machine@(Machine _ _ [] _) =
   Result (Error "operation failed because there is no element on the stack") machine
 
 execIfBlock condOp machine@(Machine (_:xs) kr (y:ys) as) =
-  case inlineIfBlock condOp y xs of
+  case inlineIfBlock condOp (bci2Bin y) xs of
     Left rc -> Result rc machine
     Right xs' -> exec (Machine xs' kr ys as)
 
@@ -287,7 +287,7 @@ inlineIfBlock condOp condition program =
     if null rest
       then Left (Error "OP_ENDIF is missing")
       else let rest' = tail rest in
-        if condOp (bsIsTrue condition)
+        if condOp (isTrue (bin2Bci condition))
           then Right $ (ifPart ++ rest')
         else if not (null elsePart)
           then Right $ (tail elsePart) ++ rest'
@@ -306,5 +306,5 @@ tmap :: Arrow a => a b c -> a (b, b) (c, c)
 tmap f = f *** f
 
 topIsTrue :: [BCI] -> Bool
-topIsTrue (x:_) = bsIsTrue x
+topIsTrue (x:_) = isTrue x
 topIsTrue _ = False
