@@ -8,8 +8,6 @@ module Language.Bitcoin.Interpreter
 -- import {{{1
 import Data.Bits (complement, (.|.), (.&.), xor)
 import Data.Word (Word8)
-import Data.Int (Int32)
-import Control.Arrow ((***), Arrow)
 import Language.Bitcoin.Types
 import Language.Bitcoin.Numbers
 import Language.Bitcoin.Text (print_result)
@@ -74,44 +72,35 @@ exec machine@(Machine (op:rest) keyring stack altStack) =
 
 simpleOp :: Opcode -> Stack -> Either ResultCode Stack
 -- constants -- {{{3
-simpleOp OP_FALSE = pushOp (BCI False  0)
-simpleOp OP_TRUE  = pushOp (BCI False  1)
-simpleOp OP_0     = pushOp (BCI False  0)
-simpleOp OP_1     = pushOp (BCI False  1)
-simpleOp OP_2     = pushOp (BCI False  2) 
-simpleOp OP_3     = pushOp (BCI False  3) 
-simpleOp OP_4     = pushOp (BCI False  4) 
-simpleOp OP_5     = pushOp (BCI False  5) 
-simpleOp OP_6     = pushOp (BCI False  6) 
-simpleOp OP_7     = pushOp (BCI False  7) 
-simpleOp OP_8     = pushOp (BCI False  8) 
-simpleOp OP_9     = pushOp (BCI False  9) 
-simpleOp OP_10    = pushOp (BCI False 10) 
-simpleOp OP_11    = pushOp (BCI False 11) 
-simpleOp OP_12    = pushOp (BCI False 12) 
-simpleOp OP_13    = pushOp (BCI False 13) 
-simpleOp OP_14    = pushOp (BCI False 14) 
-simpleOp OP_15    = pushOp (BCI False 15) 
-simpleOp OP_16    = pushOp (BCI False 16) 
+simpleOp OP_FALSE = pushOp  0
+simpleOp OP_TRUE  = pushOp  1
+simpleOp OP_0     = pushOp  0
+simpleOp OP_1     = pushOp  1
+simpleOp OP_2     = pushOp  2 
+simpleOp OP_3     = pushOp  3 
+simpleOp OP_4     = pushOp  4 
+simpleOp OP_5     = pushOp  5 
+simpleOp OP_6     = pushOp  6 
+simpleOp OP_7     = pushOp  7 
+simpleOp OP_8     = pushOp  8 
+simpleOp OP_9     = pushOp  9 
+simpleOp OP_10    = pushOp 10 
+simpleOp OP_11    = pushOp 11 
+simpleOp OP_12    = pushOp 12 
+simpleOp OP_13    = pushOp 13 
+simpleOp OP_14    = pushOp 14 
+simpleOp OP_15    = pushOp 15 
+simpleOp OP_16    = pushOp 16 
 
 -- stack -- {{{3
 simpleOp OP_IFDUP = stackOp 1 (\(x:xs) -> if isTrue x then x:x:xs else x:xs)
-simpleOp OP_DEPTH = (\stack -> Right $ (BCI False ((fromIntegral . length) stack)) : stack)
+simpleOp OP_DEPTH = (\stack -> Right $ (fromIntegral . length) stack : stack)
 simpleOp OP_DROP  = stackOp 1 (\(_:xs) -> xs)
 simpleOp OP_DUP   = stackOp 1 (\(x:xs) -> x:x:xs)
 simpleOp OP_NIP   = stackOp 2 (\(x:_:xs) -> x:xs)
 simpleOp OP_OVER  = stackOp 2 (\(x1:x2:xs) -> x2:x1:x2:xs)
-
-simpleOp OP_PICK = stackOp' 1 (\(x:xs) -> case bci2Int x of
-  Left e -> Left $ Error e
-  Right n -> let n' = fromIntegral n in
-    stackOp n' (\xs' -> head (take n' xs') : xs') xs)
-
-simpleOp OP_ROLL = stackOp' 1 (\(x:xs) -> case bci2Int x of
-  Left e -> Left $ Error e
-  Right n -> let n' = fromIntegral n in
-    stackOp n' (\xs' -> take (n'-1) xs' ++ drop n' xs') xs)
-
+simpleOp OP_PICK  = stackOp 1 (\(x:xs) -> (head $ take (fromIntegral x) xs) : xs)
+simpleOp OP_ROLL  = stackOp 1 (\(x:xs) -> take (fromIntegral x -1) xs ++ drop (fromIntegral x) xs)
 simpleOp OP_ROT   = stackOp 3 (\(x1:x2:x3:xs) -> x3:x1:x2:xs)
 simpleOp OP_SWAP  = stackOp 2 (\(x1:x2:xs) -> x2:x1:xs)
 simpleOp OP_TUCK  = stackOp 2 (\(x1:x2:xs) -> x1:x2:x1:xs)
@@ -123,44 +112,37 @@ simpleOp OP_2ROT  = stackOp 6 (\(x1:x2:x3:x4:x5:x6:xs) -> x5:x6:x1:x2:x3:x4:xs)
 simpleOp OP_2SWAP = stackOp 4 (\(x1:x2:x3:x4:xs) -> x3:x4:x1:x2:xs)
 
 -- splice -- {{{3
-simpleOp OP_CAT = stackOp 2 (\(x1:x2:xs) -> (B.append x1 x2) : xs)
+simpleOp OP_CAT = stackOp 2 (\(x1:x2:xs) -> (bin2Bci $ B.append (bci2Bin x1) (bci2Bin x2)) : xs)
 
-simpleOp OP_SUBSTR = stackOp' 3 (\(size:begin:bytes:xs) -> opSubstr (bci2Int size) (bci2Int begin) bytes xs)
+simpleOp OP_SUBSTR = stackOp' 3 (\(size:begin:bytes:xs) -> opSubstr (fromIntegral size) (fromIntegral begin) (bci2Bin bytes) xs)
   where
-    opSubstr (Left e) _ _ _ = Left $ Error e
-    opSubstr _ (Left e) _ _ = Left $ Error e
-    opSubstr (Right size) (Right begin) bytes xs =
-      let (size', begin') = tmap fromIntegral (size, begin) in
-      if B.length bytes < begin' + size'
+    opSubstr size begin bytes xs =
+      if B.length bytes < begin + size
         then Left $ Error "OP_SUBSTR goes beyond the end of the string"
-        else Right $ (B.take size' $ B.drop begin' bytes) : xs
+        else Right $ bin2Bci (B.take size $ B.drop begin bytes) : xs
 
-simpleOp OP_LEFT = stackOp' 2 (\(size:bytes:xs) -> opLeft (bci2Int size) bytes xs)
+simpleOp OP_LEFT = stackOp' 2 (\(size:bytes:xs) -> opLeft (fromIntegral size) (bci2Bin bytes) xs)
   where
-    opLeft (Left e) _ _ = Left $ Error e
-    opLeft (Right size) bytes xs =
-      let size' = fromIntegral size in
-      if B.length bytes < size'
+    opLeft size bytes xs =
+      if B.length bytes < size
         then Left $ Error "OP_LEFT goes beyond the end of the string"
-        else Right $ (B.take size' bytes) : xs
+        else Right $ bin2Bci (B.take size bytes) : xs
 
-simpleOp OP_RIGHT = stackOp' 2 (\(size:bytes:xs) -> opRight (bci2Int size) bytes xs)
+simpleOp OP_RIGHT = stackOp' 2 (\(size:bytes:xs) -> opRight (fromIntegral size) (bci2Bin bytes) xs)
   where
-    opRight (Left e) _ _ = Left $ Error e
-    opRight (Right size) bytes xs =
-      let size' = fromIntegral size in
-      if B.length bytes < size'
+    opRight size bytes xs =
+      if B.length bytes < size
         then Left $ Error "OP_RIGHT goes beyond the end of the string"
-        else Right $ (B.drop size' bytes) : xs
+        else Right $ bin2Bci (B.drop size bytes) : xs
 
-simpleOp OP_SIZE   = stackOp 1 (\(bytes:xs) -> (int2Bci . fromIntegral . B.length) bytes : xs)
+simpleOp OP_SIZE   = stackOp 1 (\(bytes:xs) -> (fromIntegral . B.length) (bci2Bin bytes) : xs)
 
 -- Bitwise logic -- {{{3
-simpleOp OP_INVERT = stackOp 1 (\(bytes:xs) -> B.map complement bytes : xs)
+simpleOp OP_INVERT = stackOp 1 (\(bytes:xs) -> bin2Bci (B.map complement (bci2Bin bytes)) : xs)
 simpleOp OP_AND    = binaryBitwiseOp (.&.)
 simpleOp OP_OR     = binaryBitwiseOp (.|.)
 simpleOp OP_XOR    = binaryBitwiseOp xor
-simpleOp OP_EQUAL  = stackOp 2 (\(x1:x2:xs) -> int2Bci (if x1 == x2 then 1 else 0) : xs)
+simpleOp OP_EQUAL  = stackOp 2 (\(x1:x2:xs) -> (if x1 == x2 then 1 else 0) : xs)
 
 -- arithmetic -- {{{3
 simpleOp OP_1ADD = unaryArithmeticOp (+1)
@@ -188,11 +170,7 @@ simpleOp OP_LESSTHANOREQUAL = binaryCondition (<=)
 simpleOp OP_GREATERTHANOREQUAL = binaryCondition (>=)
 simpleOp OP_MIN = binaryArithmeticOp min
 simpleOp OP_MAX = binaryArithmeticOp max
-simpleOp OP_WITHIN = stackOp' 3 (\(x1:x2:x3:xs) ->
-  case (do n1 <- bci2Int x1; n2 <- bci2Int x2; n3 <- bci2Int x3; return (n1, n2, n3)) of
-    Left e -> Left $ Error e
-    Right (n1, n2, n3) -> Right $
-      int2Bci (if n1 >= n2 && n1 < n3 then 1 else 0) : xs)
+simpleOp OP_WITHIN = stackOp 3 (\(x1:x2:x3:xs) -> (if x1 >= x2 && x1 < x3 then 1 else 0) : xs)
 
 -- crypto -- {{{3
 simpleOp OP_RIPEMD160 = undefined
@@ -227,32 +205,25 @@ simpleOp OP_NOP8      = reservedOp OP_NOP8
 simpleOp OP_NOP9      = reservedOp OP_NOP9
 simpleOp OP_NOP10     = reservedOp OP_NOP10
 
-simpleOp (OP_PUSHDATA _ bytes) = pushOp bytes
+simpleOp (OP_PUSHDATA _ bytes) = pushOp $ (bin2Bci bytes)
 simpleOp op = (\_ -> Left $ Error $ "sorry, opcode " ++ show op ++ " is not implemented yet.")
 
 -- ops {{{2
 pushOp :: BCI -> Stack -> Either ResultCode Stack
 pushOp x xs = Right $ x:xs
 
-unaryArithmeticOp :: (Int32 -> Int32) -> Stack -> Either ResultCode Stack
-unaryArithmeticOp operation = stackOp' 1 (\(x:xs) ->
-  case bci2Int x of
-    Left e -> Left $ Error e
-    Right n -> Right $ int2Bci (operation n) : xs)
+unaryArithmeticOp :: (BCI -> BCI) -> Stack -> Either ResultCode Stack
+unaryArithmeticOp operation = stackOp 1 (\(x:xs) -> (operation x) : xs)
 
-binaryArithmeticOp :: (Int32 -> Int32 -> Int32) -> Stack -> Either ResultCode Stack
-binaryArithmeticOp operation = stackOp' 2 (\(x1:x2:xs) ->
-  case (bci2Int x1, bci2Int x2) of
-    (Left e, _) -> Left $ Error e
-    (_, Left e) -> Left $ Error e
-    (Right n1, Right n2) -> Right $ int2Bci (operation n1 n2) : xs)
+binaryArithmeticOp :: (BCI -> BCI -> BCI) -> Stack -> Either ResultCode Stack
+binaryArithmeticOp operation = stackOp 2 (\(x1:x2:xs) -> (operation x1 x2) : xs)
 
-binaryCondition :: (Int32 -> Int32 -> Bool) -> Stack -> Either ResultCode Stack
+binaryCondition :: (BCI -> BCI -> Bool) -> Stack -> Either ResultCode Stack
 binaryCondition condition = binaryArithmeticOp (\a b -> if condition a b then 1 else 0)
 
 binaryBitwiseOp :: (Word8 -> Word8 -> Word8) -> Stack -> Either ResultCode Stack
 binaryBitwiseOp byteOp = stackOp 2 (\(x1:x2:xs) ->
-  (B.pack $ map (uncurry byteOp) $ zip (B.unpack (bci2Bin x1)) (B.unpack (bci2Bin x2))) : xs)
+  bin2Bci (B.pack $ map (uncurry byteOp) $ zip (B.unpack (bci2Bin x1)) (B.unpack (bci2Bin x2))) : xs)
 
 pseudoOp :: Opcode -> Stack -> Either ResultCode a
 pseudoOp x _ = Left $ Error $ show x ++ " is a pseudo opcode. It can not be executed."
@@ -302,9 +273,8 @@ isElse OP_ELSE = True
 isElse _ = False
 
 -- utils {{{2
-tmap :: Arrow a => a b c -> a (b, b) (c, c)
-tmap f = f *** f
 
 topIsTrue :: [BCI] -> Bool
 topIsTrue (x:_) = isTrue x
 topIsTrue _ = False
+

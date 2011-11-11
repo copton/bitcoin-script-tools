@@ -7,10 +7,10 @@ module Language.Bitcoin.Parser
 -- import {{{1
 import Control.Monad (liftM, when)
 import Data.Char (isSpace)
-import Data.Int (Int32)
 import Data.Maybe (catMaybes)
 import Data.Word (Word8)
 import Language.Bitcoin.Types
+import Language.Bitcoin.Numbers
 import qualified Data.ByteString as B
 import qualified Data.Char as C
 import qualified Data.List as List
@@ -61,12 +61,10 @@ operation = do
         x -> opcode x
   spaces >> return op
 
-keyOrSig :: (Int32 -> Command) -> Parser Command
+keyOrSig :: (BCI -> Command) -> Parser Command
 keyOrSig createCommand = do
   number <- spaces >> hexString
-  case b2i number of
-    Left e -> parserFail e
-    Right value -> return $ createCommand value
+  return $ createCommand (bin2Bci number)
 
 opcode :: String -> Parser Command
 opcode x = liftM CmdOpcode $ liftReadS reads x
@@ -95,18 +93,16 @@ push4 = pushN checkLength checkValue FourBytes
     checkLength len = when (len /= 4) $ parserFail "OP_PUSHDATA4 expects a four bytes size parameter"
     checkValue _ = return ()
 
-pushN :: (Int -> Parser ()) -> (Int32 -> Parser ()) -> PushDataType -> Parser Command
+pushN :: (Int -> Parser ()) -> (Int -> Parser ()) -> PushDataType -> Parser Command
 pushN checkLength checkValue pushType = do
-  sizeString <- spaces >> hexString
-  checkLength $ bsLength sizeString
-  sizeValue <- liftError $ b2i sizeString
-  when (sizeValue == 0) $
-    parserFail "data of zero length is not allowed"
-  checkValue sizeValue
+--  sizeString <- spaces >> hexString
+--  sizeLength <- fromIntegral (B.length sizeString)
+--  checkLength $ sizeLength
   dataString <- spaces >> hexString
-  let dataLength = fromIntegral $ bsLength dataString
-  when (dataLength /= sizeValue) $
-    parserFail $ "actual length of data does not match the announced length (" ++ show dataLength ++ " vs. " ++ show sizeValue ++ ")"
+--  dataLength <- fromIntegral (B.length dataString)
+--  checkValue $ dataLength
+--  when (dataLength /= sizeLength) $
+--    parserFail $ "actual length of data does not match the announced length (" ++ show dataLength ++ " vs. " ++ show checkLength ++ ")"
   return $ CmdOpcode $ OP_PUSHDATA pushType dataString
     
   

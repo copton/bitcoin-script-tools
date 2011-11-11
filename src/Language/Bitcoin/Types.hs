@@ -1,7 +1,6 @@
 module Language.Bitcoin.Types where
 -- import {{{1
 import qualified Data.ByteString as B
-import Data.Int (Int32)
 import Language.Bitcoin.Numbers
 
 -- types {{{1
@@ -170,8 +169,8 @@ data PushDataType =
 
 data Command = -- {{{1
     CmdOpcode Opcode
-  | DATA B.ByteString
-  | KEY Int32
-  | SIG Int32
+  | DATA BCI
+  | KEY BCI
+  | SIG BCI
   deriving (Show, Eq)
 

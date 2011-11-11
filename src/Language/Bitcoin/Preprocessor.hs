@@ -5,9 +5,8 @@ module Language.Bitcoin.Preprocessor
 ) where
 
 -- import {{{1
-import Data.Int (Int32)
 import Language.Bitcoin.Types
-import Language.Bitcoin.Utils (bs, pad)
+import Language.Bitcoin.Numbers
 import qualified Data.ByteString as B
 import qualified Data.List as List
 
@@ -23,27 +22,26 @@ process (SIG number) x = processKey keyPrivate number x
 process (DATA data_) (program, keyring) = (push data_ : program, keyring)
 
 
-processKey :: (Keypair -> B.ByteString) -> Int32 -> (Program, Keyring) -> (Program, Keyring)
+processKey :: (Keypair -> BCI) -> BCI -> (Program, Keyring) -> (Program, Keyring)
 processKey getter number (program, keyring) =
   let (keyring', keypair) = getOrCreate keyring number in
   (OP_PUSHDATA Direct (getter keypair) : program, keyring')
 
 
-getOrCreate :: Keyring -> Int32 -> (Keyring, Keypair)
-getOrCreate keyring number =
-  let publicKey = pad 64 $ bs $ fromIntegral number in
-  case List.find ((==publicKey) . keyPublic) keyring of
+getOrCreate :: Keyring -> BCI -> (Keyring, Keypair)
+getOrCreate keyring publicKey =
+  case List.find ((== publicKey) . keyPublic) keyring of
     Nothing ->
       let
-        privateKey = pad 64 $ bs $ fromIntegral $ -1 * number
+        privateKey = negate publicKey
         keypair = Keypair publicKey privateKey
       in
         (keypair : keyring, keypair)
     Just keypair -> (keyring, keypair)
 
 
-push :: B.ByteString -> Opcode
-push data_ = OP_PUSHDATA (pushType (B.length data_)) data_
+push :: BCI -> Opcode
+push data_ = OP_PUSHDATA (pushType (B.length data_)) (bci2Bin data_)
   where
     pushType size
       | size == 0 = error "internal error"
