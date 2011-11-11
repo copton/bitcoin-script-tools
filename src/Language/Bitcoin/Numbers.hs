@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
 
 -- ********************************************************************
 -- *    PGMID.        BITCOIN NUMBER TYPE MODULE.                     *
@@ -9,15 +10,22 @@
 -- *    REMARKS.      REVISION HISTORY AT END OF FILE.                *
 -- ********************************************************************
 
-module Language.Bitcoin.Numbers where
+module Language.Bitcoin.Numbers (
+  BCI
+, bin2Bci
+, bci2Bin
+, isTrue
+) where
 
 import qualified Data.ByteString as B
 import Data.Word (Word8)
+import Data.List (elemIndex)
 
 
--- ########################################################
+-- ####################################################################
 -- BitCoin arbitrary precision Integers
--- ########################################################
+--     Bloated definition to allow "-0" to be represented.
+-- ####################################################################
 
 data BCI = BCI {
       sign :: Bool      -- is negative?
@@ -25,65 +33,81 @@ data BCI = BCI {
     }
 
 
--- ########################################################
+-- ####################################################################
 -- Display BCIs
 --     If the absolute value of the integer is in the range
 --     [-2^31 .. 2^31-1], it is printed as a numeric value,
 --     otherwise as a hex-encoded binary representation.
--- ########################################################
+-- ####################################################################
 
 instance Show BCI where
-    show n = showsBCI n
+    show n = showBCI n
 
-showsBCI :: BCI -> String
-showsBCI n = if signedVal >= lower && signedVal <= upper then
-        show signedVal
+showBCI :: BCI -> String
+showBCI n = if signedVal >= lower && signedVal <= upper then
+        (if signedVal == 0 && (sign n) then "-0" else show signedVal)
     else 
-        showsHex "0x" (int2Bin (value n) (sign n) [])
+        hexify "0x" (int2Bin (value n) (sign n) [])
     where
         signedVal = bci2Int n
         upper = fromIntegral (maxBound :: Int)
         lower = fromIntegral (minBound :: Int)
 
 hexChars :: String
-hexChars = "0123456789ABCDEF"
+hexChars = "0123456789ABCDEFabcdef"
 
-showsHex :: String -> [Word8] -> String
-showsHex s [] = s
-showsHex s (x:xs) = showsHex (s ++ (hex $ fromEnum x)) xs where
+hexify :: String -> [Word8] -> String
+hexify s [] = s
+hexify s (x:xs) = hexify (s ++ (hex $ fromEnum x)) xs where
     hex :: Int -> String
     hex b = (hexChars !! (b `div` 16)) : (hexChars !! (b `mod` 16)) : []
 
 
--- ########################################################
+-- ####################################################################
 -- Read BCIs from strings
--- ########################################################
+-- ####################################################################
 
 instance Read BCI where
-    readsPrec _ s =  readsBCI s
+    -- skip leading white spaces
+    readsPrec d (' ':s) = readsPrec d s 
+    readsPrec d ('\t':s) = readsPrec d s 
+    readsPrec d ('\r':s) = readsPrec d s
+    readsPrec d ('\n':s) = readsPrec d s
+    -- read BCI from hexadecimal representation  
+    readsPrec _ ('0':'x':s) = hex2Bci h [] s' where (h,s') = scanHex "" s 
+    -- read BCI as signed number
+    readsPrec _ ('-':s) = [(BCI True i, s') | (i,s') <- reads s]
+    readsPrec _ s = [(BCI False i, s') | (i,s') <- reads s]
 
-readsBCI :: String -> [(BCI,String)]
-readsBCI s = if (take 2 s) == "0x"
-    then readsHex $ drop 2 s
-    else readsNum s
+hex2Bci :: String -> [Word8] -> String -> [(BCI,String)]
+hex2Bci [] [] _ = []
+hex2Bci s [] s' = hex2Bci (if odd $ length s then '0':s else s) [0] s'
+hex2Bci [] b s' = [(bin2Bci' $ drop 1 b, s')]
+hex2Bci (c1:c2:s) b s' = hex2Bci s (b ++ [toEnum(16 * hexVal c1 + hexVal c2)]) s' 
 
-readsHex :: String -> [(BCI,String)]
-readsHex _ = []
+scanHex :: String -> String -> (String,String)
+scanHex s [] = (s,"")
+scanHex s (x:xs) = if hexVal x < 0
+    then (s, x:xs) 
+    else scanHex (s ++ [x]) xs
 
-readsNum :: String -> [(BCI,String)]
-readsNum _ = []
+hexVal :: Char -> Int
+hexVal c = case elemIndex c hexChars of
+    Nothing -> -1
+    Just idx -> if idx > 15 then idx - 6 else idx
 
 
--- ########################################################
+-- ####################################################################
 -- Compare BCIs
--- ########################################################
+-- ####################################################################
 
 instance Eq BCI where
-    (==) n1 n2 = (bci2Int n1) == (bci2Int n2)
+    (==) n1 n2 = (sign n1) == (sign n2) && (value n1) == (value n2)
 
--- ########################################################
+
+-- ####################################################################
 -- Number instances
--- ########################################################
+-- ####################################################################
 
 instance Num BCI where
     (*) n1 n2 = BCI ((sign n1) /= (sign n2)) ((value n1) * (value n2))
@@ -122,17 +146,17 @@ instance Integral BCI where
     toInteger n = bci2Int n
 
 
--- ########################################################
+-- ####################################################################
 -- Logical operations
--- ########################################################
+-- ####################################################################
 
 isTrue :: BCI -> Bool
 isTrue n = n /= BCI False 0
 
 
--- ########################################################
+-- ####################################################################
 -- Conversion between intrinsic integers and BCIs
--- ########################################################
+-- ####################################################################
 
 int2Bci :: Integer -> BCI
 int2Bci i = BCI neg val where
@@ -142,9 +166,10 @@ int2Bci i = BCI neg val where
 bci2Int :: BCI -> Integer
 bci2Int n = if sign n then negate $ value n else value n
 
--- ########################################################
+
+-- ####################################################################
 -- Convert binary representation to BCI
--- ########################################################
+-- ####################################################################
 -- in:  binary representation 
 -- out: BCI
 
@@ -159,7 +184,7 @@ bin2Bci bs = bin2Bci' $ B.unpack bs
 
 bin2Bci' :: [Word8] -> BCI
 bin2Bci' [] = BCI False 0
-bin2Bci' (x:xs) = BCI neg (bin2int (val:xs)) where
+bin2Bci' (x:xs) = BCI neg (bin2Int (val:xs)) where
     neg =  x > 127
     val = if neg then x - 128 else x
 
@@ -169,13 +194,13 @@ bin2Bci' (x:xs) = BCI neg (bin2int (val:xs)) where
 -- in:  byte array (binary representation)
 -- out: unsigned integer value
 
-bin2int :: [Word8] -> Integer
-bin2int xs = foldl (\v x -> 256 * v + fromIntegral (fromEnum x)) 0 xs
+bin2Int :: [Word8] -> Integer
+bin2Int xs = foldl (\v x -> 256 * v + fromIntegral (fromEnum x)) 0 xs
 
 
--- ########################################################
+-- ####################################################################
 -- Convert BCI to binary representation
--- ########################################################
+-- ####################################################################
 -- in:  BCI
 -- out: binary representation 
 
@@ -192,11 +217,9 @@ bci2Bin n =  B.pack $ int2Bin (value n) (sign n) []
 
 int2Bin :: Integer -> Bool-> [Word8] -> [Word8]
 int2Bin 0 s [] = if s then [128] else [0]
-int2Bin 0 s (x:xs) = if s then (
-                          if x > 127 then (128:x:xs)
-                                     else ((x+128):xs)
-                      ) else x:xs
+int2Bin 0 s (x:xs) = if x > 127 then off:x:xs else (x+off):xs where
+    off = if s then 128 else 0
 int2Bin n s xs = int2Bin (n `div` 256) s ((lsb n):xs) where
     lsb :: Integer -> Word8
-    lsb v = toEnum (fromIntegral (v `mod` 256))
+    lsb v = toEnum $ fromIntegral (v `mod` 256)
 
