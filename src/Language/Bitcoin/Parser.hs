@@ -64,7 +64,7 @@ operation = do
 
 dataCmd :: Parser Command
 dataCmd = do
-  (_, value) <- bciValue
+  value <- bciValue
   return $ DATA value
 
 keyOrSig :: (Int -> Command) -> Parser Command
@@ -77,44 +77,48 @@ opcode :: String -> Parser Command
 opcode x = liftM CmdOpcode $ liftReadS reads $ if take 3 x == "OP_" then x else "OP_" ++ x
 
 push :: Parser Command
-push = pushN checkLength checkValue Direct
+push = pushN checkLength Direct
   where
-    checkLength len = when (len /= 1) $ parserFail "OP_PUSHDATA expects a one byte size parameter"
-    checkValue value = when (value > 75) $ parserFail "OP_PUSHDATA only support up to 75 bytes of data"
+    checkLength len = when (len > 75) $ parserFail "OP_PUSHDATA only supports up to 75 bytes"
 
 push1 :: Parser Command
-push1 = pushN checkLength checkValue OneByte
+push1 = pushN checkLength OneByte
   where
-    checkLength len = when (len /= 1) $ parserFail "OP_PUSHDATA1 expects a one byte size parameter"
-    checkValue _ = return ()
+    checkLength len = when (len > 0xff) $ parserFail "OP_PUSHDATA1 only supports up to 255 bytes."
 
 push2 :: Parser Command
-push2 = pushN checkLength checkValue TwoBytes
+push2 = pushN checkLength TwoBytes
   where
-    checkLength len = when (len /= 2) $ parserFail "OP_PUSHDATA2 expects a two bytes size parameter"
-    checkValue _ = return ()
+    checkLength len = when (len > 0xffff) $ parserFail "OP_PUSHDATA2 only supports up to 65535 bytes."
   
 push4 :: Parser Command
-push4 = pushN checkLength checkValue FourBytes
+push4 = pushN checkLength FourBytes
   where
-    checkLength len = when (len /= 4) $ parserFail "OP_PUSHDATA4 expects a four bytes size parameter"
-    checkValue _ = return ()
+    checkLength len = when (len > 0xffffffff) $ parserFail "OP_PUSHDATA4 only supports up to 4294967295 bytes."
 
-pushN :: (BCI -> Parser ()) -> (Int -> Parser ()) -> PushDataType -> Parser Command
-pushN checkLength checkValue pushType = do
-  (sizeLength, size) <- bciValue
---  checkLength sizeLength
-  (dataLength, data_) <- bciValue
---  checkValue $ realSize
---  when (realSize /= fromIntegral size) $
---    parserFail $ "actual length of data does not match the announced length (" ++ show realSize ++ " vs. " ++ show size ++ ")"
-  return $ CmdOpcode $ OP_PUSHDATA pushType data_
+pushN :: (BCI -> Parser ()) -> PushDataType -> Parser Command
+pushN checkLength pushType = do
+  len <- bciValue
+  when (len <= 0) $ parserFail "the length field of OP_PUSHDATA must be a positive value"
+  checkLength len
+  dataString <- spaces >> pushdataString len
+  dataValue <- liftReadS reads dataString
+  return $ CmdOpcode $ OP_PUSHDATA pushType dataValue
 
-bciValue :: Parser (Int, BCI)
+pushdataString :: BCI -> Parser String
+pushdataString len = do
+  dataString <- spaces >> many alphaNum
+  when (take 2 dataString /= "0x") $ parserFail "the data field of OP_PUSHDATA must be a hexadecimal value"
+  let (dataLen, rest) = (length dataString - 2) `quotRem` 2
+  when (rest == 1) $ parserFail "the data field of OP_PUSHDATA is missing a nibble"
+  when (dataLen /= fromIntegral len) $
+    parserFail $ "actual length of data does not match the announced length (" ++ show dataLen ++ " vs. " ++ show len ++ ")"
+  return dataString
+
+bciValue :: Parser BCI
 bciValue = do
   string <- spaces >> many alphaNum
-  value <- liftReadS reads string
-  return (length string, value) 
+  liftReadS reads string
 
 --hexString :: Parser B.ByteString
 --hexString = liftM B.pack $ many hexByte
