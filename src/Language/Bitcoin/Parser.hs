@@ -6,7 +6,7 @@ module Language.Bitcoin.Parser
 
 -- import {{{1
 import Control.Monad (liftM, when)
-import Data.Char (isSpace)
+import Data.Char (isSpace, toUpper)
 import Data.Maybe (catMaybes) 
 import Language.Bitcoin.Types
 import Language.Bitcoin.Numbers (BCI)
@@ -47,7 +47,7 @@ operation = do
     command <- many (alphaNum <|> char '_' <?> "opcode") 
     if command == ""
       then return Nothing
-      else liftM Just $ case command of
+      else liftM Just $ case map toUpper command of
         "DATA" -> dataCmd
         "KEY" -> keyOrSig KEY
         "SIG" -> keyOrSig SIG
@@ -55,6 +55,10 @@ operation = do
         "OP_PUSHDATA1" -> push1
         "OP_PUSHDATA2" -> push2
         "OP_PUSHDATA4" -> push4
+        "PUSHDATA" -> push
+        "PUSHDATA1" -> push1
+        "PUSHDATA2" -> push2
+        "PUSHDATA4" -> push4
         x -> opcode x
   spaces >> return op
 
@@ -70,7 +74,7 @@ keyOrSig createCommand = do
   return $ createCommand number
 
 opcode :: String -> Parser Command
-opcode x = liftM CmdOpcode $ liftReadS reads x
+opcode x = liftM CmdOpcode $ liftReadS reads $ if take 3 x == "OP_" then x else "OP_" ++ x
 
 push :: Parser Command
 push = pushN checkLength checkValue Direct

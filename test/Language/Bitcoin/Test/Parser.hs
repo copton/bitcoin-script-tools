@@ -14,6 +14,9 @@ tests = TestLabel "Parser" $ TestList $ good ++ bad
 
 goodCases = [
     ("OP_FALSE", [CmdOpcode OP_FALSE])
+  , ("FALSE", [CmdOpcode OP_FALSE])
+  , ("op_false", [CmdOpcode OP_FALSE])
+  , ("false", [CmdOpcode OP_FALSE])
   , ("OP_FALSE ", [CmdOpcode OP_FALSE])
   , (" OP_FALSE", [CmdOpcode OP_FALSE])
   , (" OP_FALSE ; ", [CmdOpcode OP_FALSE])
@@ -24,13 +27,19 @@ goodCases = [
   , ("# comment\nOP_FALSE", [CmdOpcode OP_FALSE])
   , ("OP_FALSE;OP_TRUE", [CmdOpcode OP_FALSE, CmdOpcode OP_TRUE])
   , ("OP_PUSHDATA 01 23", [CmdOpcode $ OP_PUSHDATA Direct (23)])
+  , ("PUSHDATA 01 23", [CmdOpcode $ OP_PUSHDATA Direct (23)])
+  , ("op_pushdata 01 23", [CmdOpcode $ OP_PUSHDATA Direct (23)])
+  , ("pushdata 01 23", [CmdOpcode $ OP_PUSHDATA Direct (23)])
   , ("OP_PUSHDATA 01 0x23", [CmdOpcode $ OP_PUSHDATA Direct (0x23)])
   , ("OP_PUSHDATA1 06 0x040815162342", [CmdOpcode $ OP_PUSHDATA OneByte (0x40815162342)])
   , ("OP_PUSHDATA2 0006 0x040815162342", [CmdOpcode $ OP_PUSHDATA TwoBytes (0x40815162342)])
   , ("OP_PUSHDATA4 00000006 0x040815162342", [CmdOpcode $ OP_PUSHDATA FourBytes (0x40815162342)])
   , ("DATA 0x040815162342", [DATA 0x40815162342])
+  , ("data 0x040815162342", [DATA 0x40815162342])
   , ("KEY 1", [KEY 1])
+  , ("key 1", [KEY 1])
   , ("SIG 1", [SIG 1])
+  , ("sig 1", [SIG 1])
   ]
 
 badCases = [
