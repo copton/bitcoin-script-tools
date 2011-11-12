@@ -5,9 +5,8 @@ import System.Exit (exitWith, ExitCode(ExitFailure))
 import qualified Language.Bitcoin.Test.Interpreter as D
 import qualified Language.Bitcoin.Test.Parser as B
 import qualified Language.Bitcoin.Test.Preprocessor as C
-import qualified Language.Bitcoin.Test.Utils as A
 
-tests = TestList [A.tests, B.tests, C.tests, D.tests]
+tests = TestList [B.tests, C.tests, D.tests]
 
 main = do
   (count, _ ) <- runTestText (putTextToHandle stderr False) tests

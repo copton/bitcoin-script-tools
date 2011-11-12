@@ -205,7 +205,7 @@ simpleOp OP_NOP8      = reservedOp OP_NOP8
 simpleOp OP_NOP9      = reservedOp OP_NOP9
 simpleOp OP_NOP10     = reservedOp OP_NOP10
 
-simpleOp (OP_PUSHDATA _ bytes) = pushOp $ (bin2Bci bytes)
+simpleOp (OP_PUSHDATA _ bytes) = pushOp bytes
 simpleOp op = (\_ -> Left $ Error $ "sorry, opcode " ++ show op ++ " is not implemented yet.")
 
 -- ops {{{2

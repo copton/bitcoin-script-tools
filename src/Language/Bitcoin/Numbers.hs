@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
-
+module Language.Bitcoin.Numbers (
 -- ********************************************************************
 -- *    PGMID.        BITCOIN NUMBER TYPE MODULE.                     *
 -- *    AUTHOR.       BERND R. FIX   >Y<                              *
@@ -9,8 +9,6 @@
 -- *                  AUTHOR. REFER TO COPYRIGHT INSTRUCTIONS.        *
 -- *    REMARKS.      REVISION HISTORY AT END OF FILE.                *
 -- ********************************************************************
-
-module Language.Bitcoin.Numbers (
   BCI
 , bin2Bci
 , bci2Bin

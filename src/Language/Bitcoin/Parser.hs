@@ -7,15 +7,12 @@ module Language.Bitcoin.Parser
 -- import {{{1
 import Control.Monad (liftM, when)
 import Data.Char (isSpace)
-import Data.Maybe (catMaybes)
-import Data.Word (Word8)
+import Data.Maybe (catMaybes) 
 import Language.Bitcoin.Types
-import Language.Bitcoin.Numbers
-import qualified Data.ByteString as B
-import qualified Data.Char as C
+import Language.Bitcoin.Numbers (BCI)
 import qualified Data.List as List
 import Text.Parsec.Prim (parserFail)
-import Text.ParserCombinators.Parsec (Parser, parse, sepEndBy, eof, many, (<|>), (<?>), alphaNum, char, hexDigit, newline, unexpected, satisfy)
+import Text.ParserCombinators.Parsec (Parser, parse, sepEndBy, eof, many, (<|>), (<?>), alphaNum, digit, char, newline, unexpected, satisfy)
 
 -- run_parser :: String -> Code -> Either String Script {{{1
 run_parser :: String -> Code -> Either String Script
@@ -51,7 +48,7 @@ operation = do
     if command == ""
       then return Nothing
       else liftM Just $ case command of
-        "DATA" -> spaces >> liftM DATA hexString
+        "DATA" -> dataCmd
         "KEY" -> keyOrSig KEY
         "SIG" -> keyOrSig SIG
         "OP_PUSHDATA" -> push
@@ -61,10 +58,16 @@ operation = do
         x -> opcode x
   spaces >> return op
 
-keyOrSig :: (BCI -> Command) -> Parser Command
+dataCmd :: Parser Command
+dataCmd = do
+  (_, value) <- bciValue
+  return $ DATA value
+
+keyOrSig :: (Int -> Command) -> Parser Command
 keyOrSig createCommand = do
-  number <- spaces >> hexString
-  return $ createCommand (bin2Bci number)
+  numberString <- spaces >> many digit
+  number <- liftReadS reads numberString 
+  return $ createCommand number
 
 opcode :: String -> Parser Command
 opcode x = liftM CmdOpcode $ liftReadS reads x
@@ -93,27 +96,30 @@ push4 = pushN checkLength checkValue FourBytes
     checkLength len = when (len /= 4) $ parserFail "OP_PUSHDATA4 expects a four bytes size parameter"
     checkValue _ = return ()
 
-pushN :: (Int -> Parser ()) -> (Int -> Parser ()) -> PushDataType -> Parser Command
+pushN :: (BCI -> Parser ()) -> (Int -> Parser ()) -> PushDataType -> Parser Command
 pushN checkLength checkValue pushType = do
---  sizeString <- spaces >> hexString
---  sizeLength <- fromIntegral (B.length sizeString)
---  checkLength $ sizeLength
-  dataString <- spaces >> hexString
---  dataLength <- fromIntegral (B.length dataString)
---  checkValue $ dataLength
---  when (dataLength /= sizeLength) $
---    parserFail $ "actual length of data does not match the announced length (" ++ show dataLength ++ " vs. " ++ show checkLength ++ ")"
-  return $ CmdOpcode $ OP_PUSHDATA pushType dataString
-    
-  
-hexString :: Parser B.ByteString
-hexString = liftM B.pack $ many hexByte
+  (sizeLength, size) <- bciValue
+--  checkLength sizeLength
+  (dataLength, data_) <- bciValue
+--  checkValue $ realSize
+--  when (realSize /= fromIntegral size) $
+--    parserFail $ "actual length of data does not match the announced length (" ++ show realSize ++ " vs. " ++ show size ++ ")"
+  return $ CmdOpcode $ OP_PUSHDATA pushType data_
 
-hexByte :: Parser Word8
-hexByte = do
-  upperNibble <- hexDigit
-  lowerNibble <- hexDigit
-  return $ fromIntegral $ (C.digitToInt upperNibble) * 16 + (C.digitToInt lowerNibble)
+bciValue :: Parser (Int, BCI)
+bciValue = do
+  string <- spaces >> many alphaNum
+  value <- liftReadS reads string
+  return (length string, value) 
+
+--hexString :: Parser B.ByteString
+--hexString = liftM B.pack $ many hexByte
+
+--hexByte :: Parser Word8
+--hexByte = do
+--  upperNibble <- hexDigit
+--  lowerNibble <- hexDigit
+--  return $ fromIntegral $ (C.digitToInt upperNibble) * 16 + (C.digitToInt lowerNibble)
 
 liftReadS :: ReadS a -> String -> Parser a
 liftReadS f s =
@@ -121,7 +127,3 @@ liftReadS f s =
   if length readings /= 1 || snd (head readings) /= ""
     then unexpected s
     else return $ fst $ head readings
-
-liftError :: Either String a -> Parser a
-liftError (Left e) = parserFail e
-liftError (Right v) = return v

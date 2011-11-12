@@ -5,47 +5,41 @@ module Language.Bitcoin.Preprocessor
 ) where
 
 -- import {{{1
+import Control.Arrow (second)
 import Language.Bitcoin.Types
 import Language.Bitcoin.Numbers
-import qualified Data.ByteString as B
-import qualified Data.List as List
+import qualified Data.Map as Map
 
--- run_preprocessor :: Script -> (Program, Keyring) {{{1
-run_preprocessor :: Script -> (Program, Keyring)
-run_preprocessor script = foldr process ([], []) script
+type Keys = Map.Map Int Keypair
 
+run_preprocessor :: Script -> (Program, Keyring) -- {{{1
+run_preprocessor script = second (Map.elems) $ foldr process ([], Map.empty) script
 
-process :: Command -> (Program, Keyring) -> (Program, Keyring)
-process (CmdOpcode op) (program, keyring) = (op : program, keyring)
-process (KEY number) x = processKey keyPublic number x
-process (SIG number) x = processKey keyPrivate number x
+process :: Command -> (Program, Keys) -> (Program, Keys)
+process (CmdOpcode op) (program, keys) = (op : program, keys)
+process (KEY keyId) x = processKey keyPublic keyId x
+process (SIG keyId) x = processKey keyPrivate keyId x
 process (DATA data_) (program, keyring) = (push data_ : program, keyring)
 
+processKey :: (Keypair -> BCI) -> Int -> (Program, Keys) -> (Program, Keys)
+processKey getter keyId (program, keys) =
+  let (keys', keypair) = getOrCreate keys keyId in
+  (OP_PUSHDATA Direct (getter keypair) : program, keys')
 
-processKey :: (Keypair -> BCI) -> BCI -> (Program, Keyring) -> (Program, Keyring)
-processKey getter number (program, keyring) =
-  let (keyring', keypair) = getOrCreate keyring number in
-  (OP_PUSHDATA Direct (getter keypair) : program, keyring')
-
-
-getOrCreate :: Keyring -> BCI -> (Keyring, Keypair)
-getOrCreate keyring publicKey =
-  case List.find ((== publicKey) . keyPublic) keyring of
-    Nothing ->
-      let
-        privateKey = negate publicKey
-        keypair = Keypair publicKey privateKey
-      in
-        (keypair : keyring, keypair)
-    Just keypair -> (keyring, keypair)
-
+getOrCreate :: Keys-> Int -> (Keys, Keypair)
+getOrCreate keys keyId =
+  case Map.lookup keyId keys of
+    Nothing -> -- TODO: generate a new key pair
+      let keypair = Keypair (fromIntegral keyId) (negate (fromIntegral keyId)) in
+      (Map.insert keyId keypair keys, keypair) 
+    Just keypair ->
+      (keys, keypair)
 
 push :: BCI -> Opcode
-push data_ = OP_PUSHDATA (pushType (B.length data_)) (bci2Bin data_)
+push data_ = OP_PUSHDATA pushType data_
   where
-    pushType size
-      | size == 0 = error "internal error"
-      | size <= 75 = Direct
-      | size <= 0xff = OneByte
-      | size <= 0xffff = TwoBytes
+    pushType
+      | data_ < 2^(8*75) = Direct
+      | data_ < 2^(8*0xff) = OneByte
+      | data_ < 2^(8*0xffff) = TwoBytes
       | otherwise = FourBytes

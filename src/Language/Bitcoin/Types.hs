@@ -157,7 +157,7 @@ data Opcode = -- {{{1
   | OP_NOP9
   | OP_NOP10
 -- data {{{2
-  | OP_PUSHDATA PushDataType B.ByteString
+  | OP_PUSHDATA PushDataType BCI
   deriving (Show, Eq, Read)
 
 data PushDataType =
@@ -170,7 +170,6 @@ data PushDataType =
 data Command = -- {{{1
     CmdOpcode Opcode
   | DATA BCI
-  | KEY BCI
-  | SIG BCI
+  | KEY Int
+  | SIG Int
   deriving (Show, Eq)
-
