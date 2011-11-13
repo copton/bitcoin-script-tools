@@ -28,7 +28,8 @@ library
     bytestring == 0.9.*,
     parsec == 3.1.*,
     binary == 0.5.*,
-    containers == 0.4.*
+    containers == 0.4.*,
+    mtl == 2.0.*
   exposed-modules:
     Language.Bitcoin.Assembler
     Language.Bitcoin.Interpreter

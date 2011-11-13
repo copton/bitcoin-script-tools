@@ -6,8 +6,9 @@ module Language.Bitcoin.Assembler
 
 -- imports {{{1
 import Control.Applicative ((<$>), (<*>))
+import Control.Monad.Error ()
 import Data.Word (Word8)
-import Language.Bitcoin.Numbers (BCI, bci2Bin)
+import Language.Bitcoin.Numbers (BCI, bci2Bin, bin2Bci)
 import Language.Bitcoin.Types
 import qualified Data.ByteString as B
 
@@ -36,8 +37,34 @@ assemblePush pushType value =
     checkLength FourBytes = (<=0xffffffff)
 
 run_disassembler :: Binary -> Either String Program -- {{{1
-run_disassembler = undefined
+run_disassembler binary
+  | B.null binary = Right []
+  | opcode > 0 && opcode <= 75 = do
+      (data_, rest') <- safeSplit (fromIntegral opcode) rest
+      program <- run_disassembler rest'
+      return $ OP_PUSHDATA Direct (bin2Bci data_) : program 
+  | opcode == 76 = disassemblePushdata 1 OneByte
+  | opcode == 77 = disassemblePushdata 2 TwoBytes
+  | opcode == 78 = disassemblePushdata 4 FourBytes
+  | otherwise = case lookup opcode opcodes' of
+      Nothing -> Left $ "unknown opcode: " ++ show opcode
+      Just opcode' -> do
+        program <- run_disassembler rest
+        return $ opcode' : program
+  where
+    opcode = B.head binary
+    rest = B.tail binary
+    disassemblePushdata sizeofLenField pushType = do
+      (len, rest') <- safeSplit sizeofLenField rest
+      (data_, rest'') <- safeSplit (fromIntegral (bin2Bci len)) rest'
+      program <- run_disassembler rest''
+      return $ OP_PUSHDATA pushType (bin2Bci data_) : program
 
+safeSplit :: Int -> B.ByteString -> Either String (B.ByteString, B.ByteString)
+safeSplit index bytes
+  | B.length bytes < index = Left "unexpected end of binary"
+  | otherwise = Right $ B.splitAt index bytes
+  
 opcodes :: [(Opcode, Word8)] -- {{{2
 opcodes = [
     (OP_FALSE, 0)
@@ -154,3 +181,9 @@ opcodes = [
   , (OP_NOP9, 184)
   , (OP_NOP10, 185)
   ]
+
+swap :: (a,b) -> (b,a)
+swap (a,b) = (b,a)
+
+opcodes' :: [(Word8, Opcode)]
+opcodes' = map swap opcodes
