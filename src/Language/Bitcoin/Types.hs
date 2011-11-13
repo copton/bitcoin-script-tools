@@ -165,7 +165,7 @@ data PushDataType =
   | OneByte
   | TwoBytes
   | FourBytes
-  deriving (Show, Eq, Read)
+  deriving (Show, Eq, Read, Enum, Bounded)
 
 data Command = -- {{{1
     CmdOpcode Opcode

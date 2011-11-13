@@ -32,12 +32,14 @@ library
     mtl == 2.0.*
   exposed-modules:
     Language.Bitcoin.Assembler
+    Language.Bitcoin.Disassembler
     Language.Bitcoin.Interpreter
+    Language.Bitcoin.Numbers
+    Language.Bitcoin.Opcodes
     Language.Bitcoin.Parser
     Language.Bitcoin.Printer
     Language.Bitcoin.Text
     Language.Bitcoin.Types
-    Language.Bitcoin.Numbers
 
 executable bitcoin-script
   hs-source-dirs:  src
@@ -54,7 +56,8 @@ executable Test
   main-is: Test.hs
   build-depends:
     base == 4.*,
-    HUnit == 1.2.*
+    HUnit == 1.2.*,
+    QuickCheck == 2.4.*
   other-modules:
     Language.Bitcoin.Test.Interpreter
     Language.Bitcoin.Test.Parser

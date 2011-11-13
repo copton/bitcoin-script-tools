@@ -9,6 +9,7 @@ import Control.Monad (liftM, when)
 import Data.Char (isSpace, toUpper)
 import Data.Maybe (catMaybes) 
 import Language.Bitcoin.Types
+import Language.Bitcoin.Opcodes (limit)
 import Language.Bitcoin.Numbers (BCI)
 import qualified Data.List as List
 import Text.Parsec.Prim (parserFail)
@@ -51,14 +52,14 @@ operation = do
         "DATA" -> dataCmd
         "KEY" -> keyOrSig KEY
         "SIG" -> keyOrSig SIG
-        "OP_PUSHDATA" -> push
-        "OP_PUSHDATA1" -> push1
-        "OP_PUSHDATA2" -> push2
-        "OP_PUSHDATA4" -> push4
-        "PUSHDATA" -> push
-        "PUSHDATA1" -> push1
-        "PUSHDATA2" -> push2
-        "PUSHDATA4" -> push4
+        "OP_PUSHDATA" -> push Direct
+        "OP_PUSHDATA1" -> push OneByte
+        "OP_PUSHDATA2" -> push TwoBytes
+        "OP_PUSHDATA4" -> push FourBytes
+        "PUSHDATA" -> push Direct
+        "PUSHDATA1" -> push OneByte
+        "PUSHDATA2" -> push TwoBytes
+        "PUSHDATA4" -> push FourBytes
         x -> opcode x
   spaces >> return op
 
@@ -76,31 +77,11 @@ keyOrSig createCommand = do
 opcode :: String -> Parser Command
 opcode x = liftM CmdOpcode $ liftReadS reads $ if take 3 x == "OP_" then x else "OP_" ++ x
 
-push :: Parser Command
-push = pushN checkLength Direct
-  where
-    checkLength len = when (len > 75) $ parserFail "OP_PUSHDATA only supports up to 75 bytes"
-
-push1 :: Parser Command
-push1 = pushN checkLength OneByte
-  where
-    checkLength len = when (len > 0xff) $ parserFail "OP_PUSHDATA1 only supports up to 255 bytes."
-
-push2 :: Parser Command
-push2 = pushN checkLength TwoBytes
-  where
-    checkLength len = when (len > 0xffff) $ parserFail "OP_PUSHDATA2 only supports up to 65535 bytes."
-  
-push4 :: Parser Command
-push4 = pushN checkLength FourBytes
-  where
-    checkLength len = when (len > 0xffffffff) $ parserFail "OP_PUSHDATA4 only supports up to 4294967295 bytes."
-
-pushN :: (BCI -> Parser ()) -> PushDataType -> Parser Command
-pushN checkLength pushType = do
+push :: PushDataType -> Parser Command
+push pushType = do
   len <- bciValue
   when (len <= 0) $ parserFail "the length field of OP_PUSHDATA must be a positive value"
-  checkLength len
+  when (len > limit pushType) $ parserFail $ "the length field of " ++ show pushType ++ " OP_PUSHDATA must be smaller then " ++ show (limit pushType)
   dataString <- spaces >> pushdataString len
   dataValue <- liftReadS reads dataString
   return $ CmdOpcode $ OP_PUSHDATA pushType len dataValue

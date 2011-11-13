@@ -4,7 +4,8 @@ import qualified Data.ByteString as B
 import Language.Bitcoin.Options
 import Language.Bitcoin.Interpreter (run_interpreter)
 import Language.Bitcoin.Preprocessor (run_preprocessor)
-import Language.Bitcoin.Assembler (run_assembler, run_disassembler)
+import Language.Bitcoin.Assembler (run_assembler)
+import Language.Bitcoin.Disassembler (run_disassembler)
 import Language.Bitcoin.Parser (run_parser)
 import Language.Bitcoin.Printer (run_printer)
 import Language.Bitcoin.Text (print_result)

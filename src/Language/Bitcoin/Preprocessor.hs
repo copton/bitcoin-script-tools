@@ -6,6 +6,7 @@ module Language.Bitcoin.Preprocessor
 
 -- import {{{1
 import Control.Arrow (second)
+import Language.Bitcoin.Opcodes (smallestPushType)
 import Language.Bitcoin.Types
 import Language.Bitcoin.Numbers
 import qualified Data.Map as Map
@@ -36,12 +37,5 @@ getOrCreate keys keyId =
     Just keypair ->
       (keys, keypair)
 
-
 push :: BCI -> Opcode
-push data_ = OP_PUSHDATA pushType ((fromIntegral . B.length . bci2Bin) data_) data_
-  where
-    pushType
-      | data_ < 2^(8*75) = Direct
-      | data_ < 2^(8*0xff) = OneByte
-      | data_ < 2^(8*0xffff) = TwoBytes
-      | otherwise = FourBytes
+push data_ = OP_PUSHDATA (smallestPushType data_) ((fromIntegral . B.length . bci2Bin) data_) data_
