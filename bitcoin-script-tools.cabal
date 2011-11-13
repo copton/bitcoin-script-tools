@@ -31,7 +31,6 @@ library
     containers == 0.4.*
   exposed-modules:
     Language.Bitcoin.Assembler
-    Language.Bitcoin.Disassembler
     Language.Bitcoin.Interpreter
     Language.Bitcoin.Parser
     Language.Bitcoin.Printer

@@ -7,6 +7,5 @@ module Language.Bitcoin.Printer
 -- import {{{1
 import Language.Bitcoin.Types
 
--- run_printer :: Script -> Code {{{1
-run_printer :: Script -> Code
+run_printer :: Program -> Code -- {{{1
 run_printer = undefined

@@ -1,10 +1,12 @@
 module Language.Bitcoin.Main where
 
+import qualified Data.ByteString as B
 import Language.Bitcoin.Options
 import Language.Bitcoin.Interpreter (run_interpreter)
 import Language.Bitcoin.Preprocessor (run_preprocessor)
---import Language.Bitcoin.Assembler (run_assembler, run_disassembler)
+import Language.Bitcoin.Assembler (run_assembler, run_disassembler)
 import Language.Bitcoin.Parser (run_parser)
+import Language.Bitcoin.Printer (run_printer)
 import Language.Bitcoin.Text (print_result)
 import System.Environment (getArgs, getProgName)
 import System.Exit (exitWith, ExitCode(ExitFailure))
@@ -26,23 +28,38 @@ runAction opts
   | otherwise = error "internal error"
 
 assembler :: Options -> IO ()
-assembler = undefined
+assembler opts = do
+  (hIn, name) <- fileIn $ optInput opts
+  script <- hGetContents hIn
+  result <- exitOnError $
+        run_parser name script
+    >>= run_assembler . fst . run_preprocessor
+  hOut <- fileOut $ optOutput opts
+  B.hPutStr hOut result
+  hFlush hOut
 
 disassembler :: Options -> IO ()
-disassembler = undefined
+disassembler opts = do
+  (hIn, _) <- fileIn $ optInput opts
+  binary <- B.hGetContents hIn
+  result <- exitOnError $
+        run_disassembler binary
+    >>= return . run_printer
+  hOut <- fileOut $ optOutput opts
+  hPutStr hOut result
+  hFlush hOut
 
 interpreter :: Options -> IO ()
 interpreter opts = do
   (hIn, name) <- fileIn $ optInput opts
-  code <- hGetContents hIn
+  script <- hGetContents hIn
   result <- exitOnError $
-        run_parser name code 
+        run_parser name script
     >>= (uncurry run_interpreter) . run_preprocessor
     >>= return . print_result
   hOut <- fileOut $ optOutput opts
   hPutStr hOut result
   hFlush hOut
-
 
 fileIn :: String -> IO (Handle, String)
 fileIn name
