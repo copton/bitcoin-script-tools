@@ -9,6 +9,7 @@ import Control.Arrow (second)
 import Language.Bitcoin.Types
 import Language.Bitcoin.Numbers
 import qualified Data.Map as Map
+import qualified Data.ByteString as B
 
 type Keys = Map.Map Int Keypair
 
@@ -24,7 +25,7 @@ process (DATA data_) (program, keyring) = (push data_ : program, keyring)
 processKey :: (Keypair -> BCI) -> Int -> (Program, Keys) -> (Program, Keys)
 processKey getter keyId (program, keys) =
   let (keys', keypair) = getOrCreate keys keyId in
-  (OP_PUSHDATA Direct (getter keypair) : program, keys')
+  (OP_PUSHDATA Direct 64 (getter keypair) : program, keys') -- TODO: set the right length
 
 getOrCreate :: Keys-> Int -> (Keys, Keypair)
 getOrCreate keys keyId =
@@ -37,7 +38,7 @@ getOrCreate keys keyId =
 
 
 push :: BCI -> Opcode
-push data_ = OP_PUSHDATA pushType data_
+push data_ = OP_PUSHDATA pushType ((fromIntegral . B.length . bci2Bin) data_) data_
   where
     pushType
       | data_ < 2^(8*75) = Direct

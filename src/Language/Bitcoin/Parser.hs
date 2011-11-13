@@ -103,7 +103,7 @@ pushN checkLength pushType = do
   checkLength len
   dataString <- spaces >> pushdataString len
   dataValue <- liftReadS reads dataString
-  return $ CmdOpcode $ OP_PUSHDATA pushType dataValue
+  return $ CmdOpcode $ OP_PUSHDATA pushType len dataValue
 
 pushdataString :: BCI -> Parser String
 pushdataString len = do

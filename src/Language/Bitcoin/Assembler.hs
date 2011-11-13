@@ -8,13 +8,13 @@ module Language.Bitcoin.Assembler
 import Control.Applicative ((<$>), (<*>))
 import Control.Monad.Error ()
 import Data.Word (Word8)
-import Language.Bitcoin.Numbers (BCI, bci2Bin, bin2Bci)
 import Language.Bitcoin.Types
+import Language.Bitcoin.Numbers (bci2Bin, bin2Bci)
 import qualified Data.ByteString as B
 
 run_assembler :: Program -> Either String Binary -- {{{1
 run_assembler [] = Right B.empty
-run_assembler ((OP_PUSHDATA pushType data_):xs) = B.append <$> assemblePush pushType data_ <*> run_assembler xs
+run_assembler (op@(OP_PUSHDATA _ _ _):xs) = B.append <$> assemblePush op <*> run_assembler xs
 run_assembler (x:xs) = B.cons <$> assembleOpcode x <*> run_assembler xs
 
 assembleOpcode :: Opcode -> Either String Word8
@@ -22,19 +22,26 @@ assembleOpcode opcode = case lookup opcode opcodes of
   Nothing -> Left "internal error: unknown opcode"
   Just x -> Right x
 
-assemblePush :: PushDataType -> BCI -> Either String B.ByteString
-assemblePush pushType value =
+assemblePush :: Opcode -> Either String B.ByteString
+assemblePush (OP_PUSHDATA pushType len value) =
   let
     bytes = bci2Bin value
-    len = B.length bytes
+    len' = B.length bytes
+    bytes' = pad (fromIntegral(len) - len') bytes
   in if (checkLength pushType len)
-    then Right $ (bci2Bin . fromIntegral) len `B.append` bytes
+    then Right $ (bci2Bin . fromIntegral) len `B.append` bytes'
     else Left "invalid length field for OP_PUSHDATA"
   where
     checkLength Direct = (<=75)
     checkLength OneByte = (<=0xff)
     checkLength TwoBytes = (<=0xffff)
     checkLength FourBytes = (<=0xffffffff)
+assemblePush _ = error "unexpected parameters"
+
+pad :: Int -> B.ByteString -> B.ByteString
+pad count bytes
+  | count < 0 = error "internal error: unexpected parameter"
+  | otherwise = B.pack (replicate count 0) `B.append` bytes
 
 run_disassembler :: Binary -> Either String Program -- {{{1
 run_disassembler binary
@@ -42,7 +49,7 @@ run_disassembler binary
   | opcode > 0 && opcode <= 75 = do
       (data_, rest') <- safeSplit (fromIntegral opcode) rest
       program <- run_disassembler rest'
-      return $ OP_PUSHDATA Direct (bin2Bci data_) : program 
+      return $ OP_PUSHDATA Direct (fromIntegral opcode) (bin2Bci data_) : program
   | opcode == 76 = disassemblePushdata 1 OneByte
   | opcode == 77 = disassemblePushdata 2 TwoBytes
   | opcode == 78 = disassemblePushdata 4 FourBytes
@@ -58,7 +65,7 @@ run_disassembler binary
       (len, rest') <- safeSplit sizeofLenField rest
       (data_, rest'') <- safeSplit (fromIntegral (bin2Bci len)) rest'
       program <- run_disassembler rest''
-      return $ OP_PUSHDATA pushType (bin2Bci data_) : program
+      return $ OP_PUSHDATA pushType (bin2Bci len) (bin2Bci data_) : program
 
 safeSplit :: Int -> B.ByteString -> Either String (B.ByteString, B.ByteString)
 safeSplit index bytes

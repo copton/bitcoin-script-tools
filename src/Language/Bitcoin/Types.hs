@@ -157,7 +157,7 @@ data Opcode = -- {{{1
   | OP_NOP9
   | OP_NOP10
 -- data {{{2
-  | OP_PUSHDATA PushDataType BCI
+  | OP_PUSHDATA PushDataType BCI BCI -- type, length, data
   deriving (Show, Eq, Read)
 
 data PushDataType =

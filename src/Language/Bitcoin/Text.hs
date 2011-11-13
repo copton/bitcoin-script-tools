@@ -35,5 +35,5 @@ print_stack :: Stack -> String
 print_stack stack = (show $ head stack) ++ "," ++ (print_stack $ tail stack)
 
 print_opcode :: Opcode -> String
-print_opcode (OP_PUSHDATA pushType data_) = "OP_PUSHDATA " ++ show pushType ++ show data_
+print_opcode (OP_PUSHDATA pushType _ data_) = "OP_PUSHDATA " ++ show pushType ++ show data_
 print_opcode op = show op
