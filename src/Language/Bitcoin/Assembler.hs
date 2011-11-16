@@ -6,9 +6,10 @@ module Language.Bitcoin.Assembler
 
 -- imports {{{1
 import Control.Applicative ((<$>), (<*>))
+import Control.Monad (when)
 import Control.Monad.Error ()
 import Data.Word (Word8)
-import Language.Bitcoin.Opcodes (opcodes, limit)
+import Language.Bitcoin.Opcodes (opcodes, limit, pushOpcode)
 import Language.Bitcoin.Types
 import Language.Bitcoin.Numbers (bci2Bin)
 import qualified Data.ByteString as B
@@ -28,15 +29,30 @@ assemblePush (OP_PUSHDATA pushType len value) =
   let
     bytes = bci2Bin value
     len' = B.length bytes
-    bytes' = pad (fromIntegral(len) - len') bytes
-  in if (len <= limit pushType)
-    then Right $ (bci2Bin . fromIntegral) len `B.append` bytes'
-    else Left "invalid length field for OP_PUSHDATA"
+    padding = (fromIntegral len) - len'
+    opcode = case pushOpcode pushType of
+      Nothing -> B.empty
+      Just x -> B.singleton x
+    lenfield = pad sizeofLenfield $ intToHex len
+    bytes' = pad padding bytes
+  in do
+    when (padding < 0) $ Left "value of len field is smaller than actual number of bytes"
+    when (len > limit pushType) $ Left "invalid length field for OP_PUSHDATA"
+    return $ B.concat [opcode, lenfield, bytes']
+  where
+    sizeofLenfield = case pushType of
+      Implicit -> 1
+      OneByte -> 1
+      TwoBytes -> 2
+      FourBytes -> 4
 
 assemblePush _ = error "unexpected parameters"
 
+intToHex :: Integer -> B.ByteString
+intToHex number = B.pack $ reverse $ intToHex' number
+  where
+    intToHex' 0 = []
+    intToHex' n = let (q,r) = n `quotRem` 16 in (fromIntegral r) : intToHex' q
+  
 pad :: Int -> B.ByteString -> B.ByteString
-pad count bytes
-  | count < 0 = error "internal error: unexpected parameter"
-  | otherwise = B.pack (replicate count 0) `B.append` bytes
-
+pad count bytes = B.pack (replicate count 0) `B.append` bytes

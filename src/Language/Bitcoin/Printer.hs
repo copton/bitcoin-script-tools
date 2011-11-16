@@ -12,7 +12,7 @@ run_printer program = printProgram program ""
 
 printProgram :: Program -> ShowS
 printProgram [] = id
-printProgram ((OP_PUSHDATA Direct _ data_):rest) =
+printProgram ((OP_PUSHDATA Implicit _ data_):rest) =
   showString "OP_PUSHDATA " . shows data_ . showChar '\n' . printProgram rest
 printProgram ((OP_PUSHDATA OneByte len data_):rest) =
   showString "OP_PUSHDATA1 " . shows len . showChar ' ' . shows data_ . showChar '\n'. printProgram rest

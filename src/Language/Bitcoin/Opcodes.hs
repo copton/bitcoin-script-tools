@@ -1,21 +1,26 @@
 module Language.Bitcoin.Opcodes (
-  opcodes, opcodes', limit, smallestPushType
+  opcodes, opcodes', limit, smallestPushType, pushOpcode
 ) where
 
 import Data.Maybe (fromJust)
 import Data.Word (Word8)
 import Data.List (find)
 import Language.Bitcoin.Types
-import Language.Bitcoin.Numbers (BCI)
 
-limit :: PushDataType -> BCI
-limit Direct = 75
+limit :: PushDataType -> Integer
+limit Implicit = 75
 limit OneByte = 0xff
 limit TwoBytes = 0xffff
 limit FourBytes = 0xffffffff
 
 smallestPushType :: Integral a => a -> PushDataType
 smallestPushType data_ = fromJust $ find (\t -> data_ < 2^(8*(limit t))) [minBound..maxBound]
+
+pushOpcode :: PushDataType -> Maybe Word8
+pushOpcode Implicit = Nothing
+pushOpcode OneByte = Just 76
+pushOpcode TwoBytes = Just 77
+pushOpcode FourBytes = Just 78
 
 opcodes :: [(Opcode, Word8)] -- {{{1
 opcodes = [

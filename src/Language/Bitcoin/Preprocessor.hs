@@ -26,7 +26,7 @@ process (DATA data_) (program, keyring) = (push data_ : program, keyring)
 processKey :: (Keypair -> BCI) -> Int -> (Program, Keys) -> (Program, Keys)
 processKey getter keyId (program, keys) =
   let (keys', keypair) = getOrCreate keys keyId in
-  (OP_PUSHDATA Direct 64 (getter keypair) : program, keys') -- TODO: set the right length
+  (OP_PUSHDATA Implicit 64 (getter keypair) : program, keys') -- TODO: set the right length
 
 getOrCreate :: Keys-> Int -> (Keys, Keypair)
 getOrCreate keys keyId =

@@ -16,27 +16,27 @@ testCases = [
       "OP_FALSE", ([OP_FALSE], [])
   ),(
       "KEY 01", (
-        [OP_PUSHDATA Direct 64 (key 1)],
+        [OP_PUSHDATA Implicit 64 (key 1)],
         [Keypair (key 1) (sig 1)]
       )
   ),(
       "KEY 01;KEY 01", (
-        [OP_PUSHDATA Direct 64 (key 1), OP_PUSHDATA Direct 64 (key 1)],
+        [OP_PUSHDATA Implicit 64 (key 1), OP_PUSHDATA Implicit 64 (key 1)],
         [Keypair (key 1) (sig 1)]
       )
   ),(
       "KEY 01;SIG 01", (
-        [OP_PUSHDATA Direct 64 (key 1), OP_PUSHDATA Direct 64 (sig 1)],
+        [OP_PUSHDATA Implicit 64 (key 1), OP_PUSHDATA Implicit 64 (sig 1)],
         [Keypair (key 1) (sig 1)]
       )
   ),(
       "KEY 01;KEY 02", (
-        [OP_PUSHDATA Direct 64 (key 1), OP_PUSHDATA Direct 64 (key 2)],
+        [OP_PUSHDATA Implicit 64 (key 1), OP_PUSHDATA Implicit 64 (key 2)],
         [Keypair (key 1) (sig 1), Keypair (key 2) (sig 2)]
       )
   ),(
       "DATA 0x1234", (
-        [OP_PUSHDATA Direct 2 0x1234],
+        [OP_PUSHDATA Implicit 2 0x1234],
         []
       )
   ),(

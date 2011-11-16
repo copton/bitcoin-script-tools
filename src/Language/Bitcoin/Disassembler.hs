@@ -15,7 +15,7 @@ run_disassembler binary
   | opcode > 0 && opcode <= 75 = do
       (data_, rest') <- safeSplit (fromIntegral opcode) rest
       program <- run_disassembler rest'
-      return $ OP_PUSHDATA Direct (fromIntegral opcode) (bin2Bci data_) : program
+      return $ OP_PUSHDATA Implicit (fromIntegral opcode) (bin2Bci data_) : program
   | opcode == 76 = disassemblePushdata 1 OneByte
   | opcode == 77 = disassemblePushdata 2 TwoBytes
   | opcode == 78 = disassemblePushdata 4 FourBytes
@@ -31,7 +31,12 @@ run_disassembler binary
       (len, rest') <- safeSplit sizeofLenField rest
       (data_, rest'') <- safeSplit (fromIntegral (bin2Bci len)) rest'
       program <- run_disassembler rest''
-      return $ OP_PUSHDATA pushType (bin2Bci len) (bin2Bci data_) : program
+      return $ OP_PUSHDATA pushType (hexToInt len) (bin2Bci data_) : program
+
+hexToInt :: B.ByteString -> Integer
+hexToInt = B.foldl hexToInt' 0
+  where
+    hexToInt' s x = s * 16 + (fromIntegral x)
 
 safeSplit :: Int -> B.ByteString -> Either String (B.ByteString, B.ByteString)
 safeSplit index bytes
